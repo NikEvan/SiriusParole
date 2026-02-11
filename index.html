@@ -133,19 +133,19 @@
       }
       body {
         height: 100%;
-        background-color: var(--color-background);
+        background-color: #0b1e3d; /* blu scuro */
+        color: white; /* testo bianco */
         margin: 0;
         padding: 0;
-        /* Prevent scrollbar appearing on page transition */
         overflow-y: hidden;
       }
     </style>
   </head>
   <body onload="randomAnalytics();">
-    <div id="nameScreen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:white; position:absolute; width:100%; z-index:9999;">
+    <div id="nameScreen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0b1e3d; color:white; position:absolute; width:100%; z-index:9999;">
   <h2>Inserisci il tuo nome</h2>
-  <input type="text" id="playerName" placeholder="Il tuo nome" style="padding:10px; font-size:18px;">
-  <button onclick="startGameWithName()" style="margin-top:10px; padding:10px 20px; font-size:16px;">Inizia</button>
+  <input type="text" id="playerName" placeholder="Il tuo nome" style="padding:10px; font-size:18px; background:#1c2b50; color:white; border:none; border-radius:5px;">
+  <button onclick="startGameWithName()" style="margin-top:10px; padding:10px 20px; font-size:16px; background:#1c2b50; color:white; border:none; border-radius:5px; cursor:pointer;">Inizia</button>
 </div>
     <script>
       (function () {
@@ -162,8 +162,16 @@ function startGameWithName() {
     return;
   }
 
+  // Salviamo solo il nome per la classifica
   localStorage.setItem("playerName", name);
+
+  // Nascondiamo la schermata nome
   document.getElementById("nameScreen").style.display = "none";
+
+  // Se Wordle ha una funzione per avviare il gioco, chiamala qui
+  if (window.wordleApp && typeof window.wordleApp.startGame === "function") {
+    window.wordleApp.startGame();
+  }
 }
 </script>
   </body>
