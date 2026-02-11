@@ -142,6 +142,11 @@
     </style>
   </head>
   <body onload="randomAnalytics();">
+    <div id="nameScreen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:white; position:absolute; width:100%; z-index:9999;">
+  <h2>Inserisci il tuo nome</h2>
+  <input type="text" id="playerName" placeholder="Il tuo nome" style="padding:10px; font-size:18px;">
+  <button onclick="startGameWithName()" style="margin-top:10px; padding:10px 20px; font-size:16px;">Inizia</button>
+</div>
     <script>
       (function () {
         // Defining the hash before the main bundle allows the bundle access window.hash
@@ -151,5 +156,17 @@
     </script>
     <script src="wordle-it.js"></script>
     <game-app></game-app>
+    <script>
+function startGameWithName() {
+  const name = document.getElementById("playerName").value.trim();
+  if (!name) {
+    alert("Inserisci il tuo nome!");
+    return;
+  }
+
+  localStorage.setItem("playerName", name);
+  document.getElementById("nameScreen").style.display = "none";
+}
+</script>
   </body>
 </html>
