@@ -149,7 +149,7 @@ window.wordle = window.wordle || {};
 window.wordle.hash = 'parle v220317';
 })();
 </script>
-<script src="wordle-it.js"></script>
+<script type="module" src="wordle-it.js"></script>
 <game-app></game-app>
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -173,10 +173,8 @@ const db = firebase.firestore();
 let playerName = localStorage.getItem("playerName");
 
 if (!playerName) {
-playerName = prompt("Inserisci il tuo nome per la classifica:");
-if (playerName) {
-localStorage.setItem("playerName", playerName);
-}
+  playerName = "Anonimo_" + Math.floor(Math.random() * 1000);
+  localStorage.setItem("playerName", playerName);
 }
 
 // -------- DATA DI OGGI --------
@@ -187,76 +185,88 @@ return today.toISOString().split("T")[0];
 
 // -------- SALVA RISULTATO --------
 async function saveScore(attempts) {
-const todayKey = getTodayKey();
+  if (!playerName) return;
 
-await db.collection("scores")
-.doc(todayKey)
-.collection("players")
-.doc(playerName)
-.set({
-attempts: attempts,
-timestamp: new Date()
-});
+  const todayKey = getTodayKey();
 
-showLeaderboard();
+  await db.collection("scores")
+    .doc(todayKey)
+    .collection("players")
+    .doc(playerName)
+    .set({
+      attempts: attempts,
+      timestamp: new Date()
+    });
+
+  showLeaderboard();
 }
 
 // -------- MOSTRA CLASSIFICA --------
 async function showLeaderboard() {
-const todayKey = getTodayKey();
+  const todayKey = getTodayKey();
 
-const snapshot = await db.collection("scores")
-.doc(todayKey)
-.collection("players")
-.get();
+  const snapshot = await db.collection("scores")
+    .doc(todayKey)
+    .collection("players")
+    .get();
 
-let results = [];
+  let results = [];
 
-snapshot.forEach(doc => {
-results.push({
-name: doc.id,
-attempts: doc.data().attempts
-});
-});
+  snapshot.forEach(doc => {
+    results.push({
+      name: doc.id,
+      attempts: doc.data().attempts
+    });
+  });
 
-results.sort((a,b) => a.attempts - b.attempts);
+  results.sort((a,b) => a.attempts - b.attempts);
 
-let message = "🏆 Classifica di oggi:\n\n";
-results.forEach((r,i) => {
-message += (i+1) + ". " + r.name + " - " + r.attempts + " tentativi\n";
-});
+  const box = document.getElementById("leaderboardBox");
+  if (!box) return;
 
-alert(message);
+  box.innerHTML = "<h3>🏆 Classifica di oggi</h3>";
+
+  results.forEach((r,i) => {
+    box.innerHTML += `<div>${i+1}. ${r.name} - ${r.attempts}</div>`;
+  });
+}
 }
 
 </script>
     <script>
 
+  <!-- QUI NASCE IL GIOCO -->
+<game-app></game-app>
+
+<!-- CONTAINER CLASSIFICA -->
+<div id="leaderboardBox" style="max-width:400px;margin:20px auto;color:white;"></div>
+
+<script>
   // Aspetta che il gioco sia caricato
   window.addEventListener("load", () => {
     const gameApp = document.querySelector("game-app");
 
-    // Aspetta che sia inizializzato
+    if (!gameApp) {
+      console.error("game-app non trovato");
+      return;
+    }
+
+    // aspettiamo che il gioco inizializzi
     setTimeout(() => {
+      if (!gameApp.showStatsModal) {
+        console.error("showStatsModal non esiste");
+        return;
+      }
 
-      // Sovrascrive la funzione che mostra le statistiche
+      // sovrascriviamo la funzione di fine partita
       gameApp.showStatsModal = async function() {
+        const attempts = this.rowIndex;
+        const won = this.gameStatus === "WIN";
 
-        const attempts = this.rowIndex; // numero tentativi
-        const won = this.gameStatus === 1; // 1 = win
-
-        if (!won) {
-          await saveScore(99); // 99 = perso
-        } else {
-          await saveScore(attempts);
-        }
-
+        await saveScore(won ? attempts : 99);
       };
-
     }, 2000);
-
   });
-
-</script>  
+</script>
 </body>
 </html>
