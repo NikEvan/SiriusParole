@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
     <title>Par🇮🇹le - Un gioco di parole al giorno (Wordle in italiano)</title>
+    <!--<meta name="description" content="Guess the hidden word in 6 tries. A new puzzle is available each day.">-->
     <meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
-
+    
     <!-- FB Meta Tags -->
     <meta property="og:url" content="https://pietroppeter.github.io/wordle-it/wordle.html">
     <meta property="og:type" content="website">
@@ -22,21 +23,29 @@
     <link rel="manifest" href="manifest.json" />
     <link href="images/parle_logo_32x32.png" rel="icon shortcut" sizes="3232" />
     <link href="images/parle_logo_192x192.png" rel="apple-touch-icon" />
-
     <script>
-      function randomAnalytics() {
-        const times = 40;
-        var index = Math.floor(Math.random() * times);
-        if (index === 0) {
-          var script = document.createElement('script');
-          script.defer = true;
-          script.setAttribute('data-domain', 'pietroppeter.github.io/wordle-it');
-          script.src = 'https://plausible.io/js/plausible.js';
-          document.getElementsByTagName('head')[0].appendChild(script);	
-        }
-      }
-    </script>
+     function randomAnalytics() {
+      // analytics are loaded once every X times
+      const times = 40;
 
+      // pick a random number
+      var index = Math.floor(Math.random()*times);
+      console.log(index)
+
+      if (index === 0) {
+        console.log("loading analytics")
+        // Append JS file to head section.
+        var script = document.createElement('script');
+        script.defer = true
+        script.setAttribute('data-domain', 'pietroppeter.github.io/wordle-it')
+        script.src = 'https://plausible.io/js/plausible.js';
+        document.getElementsByTagName('head')[0].appendChild(script);	
+      }
+      else {
+        console.log("NOT loading analytics")
+      }
+     };
+    </script>
     <style>
       /* Global Styles & Colors */
       :root {
@@ -49,6 +58,7 @@
         --darkGray: #939598;
         --white: #fff;
         --black: #212121;
+        /* Colorblind colors */
         --orange: #f5793a;
         --blue: #85c0f9;
         font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -57,7 +67,6 @@
         --keyboard-height: 200px;
         --game-max-width: 500px;
       }
-
       /* Light theme colors */
       :root {
         --color-tone-1: #1a1a1b;
@@ -69,7 +78,6 @@
         --color-tone-7: #ffffff;
         --opacity-50: rgba(255, 255, 255, 0.5);
       }
-
       /* Dark Theme Colors */
       .nightmode {
         --color-tone-1: #d7dadc;
@@ -81,13 +89,11 @@
         --color-tone-7: #121213;
         --opacity-50: rgba(0, 0, 0, 0.5);
       }
-
       /* Constant colors and colors derived from theme */
       :root,
       .nightmode {
         --color-background: var(--color-tone-7);
       }
-
       :root {
         --color-present: var(--yellow);
         --color-correct: var(--green);
@@ -101,7 +107,6 @@
         --key-bg-absent: var(--color-absent);
         --modal-content-bg: var(--color-tone-7);
       }
-
       .nightmode {
         --color-present: var(--darkendYellow);
         --color-correct: var(--darkendGreen);
@@ -115,7 +120,6 @@
         --key-bg-absent: var(--color-absent);
         --modal-content-bg: var(--color-tone-7);
       }
-
       .colorblind {
         --color-correct: var(--orange);
         --color-present: var(--blue);
@@ -124,63 +128,107 @@
         --key-bg-correct: var(--color-correct);
         --key-bg-absent: var(--color-absent);
       }
-
-      html { height: 100%; }
+      html {
+        height: 100%;
+      }
       body {
         height: 100%;
         background-color: var(--color-background);
         margin: 0;
         padding: 0;
+        /* Prevent scrollbar appearing on page transition */
         overflow-y: hidden;
       }
     </style>
   </head>
-
   <body onload="randomAnalytics();">
-
-    <!-- SCHERMATA INIZIALE NOME -->
-    <div id="nameScreen" style="
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        height:100vh;
-        width:100%;
-        position:absolute;
-        top:0;
-        left:0;
-        background-color:#0a1a2a;
-        z-index:9999;
-        color:white;
-    ">
-      <h2>Inserisci il tuo nome</h2>
-      <input type="text" id="playerName" placeholder="Il tuo nome" style="padding:10px; font-size:18px; border-radius:5px; text-align:center;">
-      <button onclick="startGameWithName()" style="margin-top:10px; padding:10px 20px; font-size:16px; border:none; border-radius:5px; background-color:#6aaa64; color:white; cursor:pointer;">Inizia</button>
-    </div>
-
-    <script>
-      // Funzione per salvare il nome e nascondere la schermata iniziale
-      function startGameWithName() {
-          const name = document.getElementById("playerName").value.trim();
-          if (!name) {
-              alert("Inserisci il tuo nome!");
-              return;
-          }
-          // Salva solo per classifica, NON per il gioco
-          localStorage.setItem("playerNameForScore", name);
-          document.getElementById("nameScreen").style.display = "none";
-      }
-    </script>
-
     <script>
       (function () {
+        // Defining the hash before the main bundle allows the bundle access window.hash
         window.wordle = window.wordle || {};
         window.wordle.hash = 'parle v220317';
       })();
     </script>
-
     <script src="wordle-it.js"></script>
     <game-app></game-app>
+    <!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
+<script>
+  // CONFIGURAZIONE FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyAR_d84pgAreyt4dDqxgGvN8VPl8kmgCfc",
+    authDomain: "parole-sirius.firebaseapp.com",
+    projectId: "parole-sirius",
+    storageBucket: "parole-sirius.firebasestorage.app",
+    messagingSenderId: "429496599887",
+    appId: "1:429496599887:web:5b9bff17b7944370c8713a"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // -------- NOME GIOCATORE --------
+  let playerName = localStorage.getItem("playerName");
+
+  if (!playerName) {
+    playerName = prompt("Inserisci il tuo nome per la classifica:");
+    if (playerName) {
+      localStorage.setItem("playerName", playerName);
+    }
+  }
+
+  // -------- DATA DI OGGI --------
+  function getTodayKey() {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  }
+
+  // -------- SALVA RISULTATO --------
+  async function saveScore(attempts) {
+    const todayKey = getTodayKey();
+
+    await db.collection("scores")
+      .doc(todayKey)
+      .collection("players")
+      .doc(playerName)
+      .set({
+        attempts: attempts,
+        timestamp: new Date()
+      });
+
+    showLeaderboard();
+  }
+
+  // -------- MOSTRA CLASSIFICA --------
+  async function showLeaderboard() {
+    const todayKey = getTodayKey();
+
+    const snapshot = await db.collection("scores")
+      .doc(todayKey)
+      .collection("players")
+      .get();
+
+    let results = [];
+
+    snapshot.forEach(doc => {
+      results.push({
+        name: doc.id,
+        attempts: doc.data().attempts
+      });
+    });
+
+    results.sort((a,b) => a.attempts - b.attempts);
+
+    let message = "🏆 Classifica di oggi:\n\n";
+    results.forEach((r,i) => {
+      message += (i+1) + ". " + r.name + " - " + r.attempts + " tentativi\n";
+    });
+
+    alert(message);
+  }
+
+</script>
   </body>
 </html>
