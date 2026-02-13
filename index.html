@@ -230,5 +230,33 @@
   }
 
 </script>
+    <script>
+
+  // Aspetta che il gioco sia caricato
+  window.addEventListener("load", () => {
+    const gameApp = document.querySelector("game-app");
+
+    // Aspetta che sia inizializzato
+    setTimeout(() => {
+
+      // Sovrascrive la funzione che mostra le statistiche
+      gameApp.showStatsModal = async function() {
+
+        const attempts = this.rowIndex; // numero tentativi
+        const won = this.gameStatus === 1; // 1 = win
+
+        if (!won) {
+          await saveScore(99); // 99 = perso
+        } else {
+          await saveScore(attempts);
+        }
+
+      };
+
+    }, 2000);
+
+  });
+
+</script>  
   </body>
 </html>
