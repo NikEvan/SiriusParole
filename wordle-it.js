@@ -1378,7 +1378,59 @@ this.wordle = this.wordle || {}, this.wordle.bundle = function(e) {
   }
   customElements.define("game-keyboard", ds);
   var cs = document.createElement("template");
-  cs.innerHTML = '\n  <style>\n    .container {\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      justify-content: center;\n      padding: 16px 0; \n    }\n    h1 {\n      font-weight: 700;\n      font-size: 16px;\n      letter-spacing: 0.5px;\n      text-transform: uppercase;\n      text-align: center;\n      margin-bottom: 10px;\n    }\n  \n    #statistics {\n      display: flex;\n      margin-bottom: \n    }\n\n    .statistic-container {\n      flex: 1;\n    }\n\n    .statistic-container .statistic {\n      font-size: 36px;\n      font-weight: 400;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      text-align: center;\n      letter-spacing: 0.05em;\n      font-variant-numeric: proportional-nums;\n    }\n\n    .statistic.timer {\n      font-variant-numeric: initial;\n    }\n\n    .statistic-container .label {\n      font-size: 12px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      text-align: center;\n    }\n\n    #guess-distribution {\n      width: 80%;\n    }\n\n    .graph-container {\n      width: 100%;\n      height: 20px;\n      display: flex;\n      align-items: center;\n      padding-bottom: 4px;\n      font-size: 14px;\n      line-height: 20px;\n    }\n\n    .graph-container .graph {\n      width: 100%;\n      height: 100%;\n      padding-left: 4px;\n    }\n\n    .graph-container .graph .graph-bar {\n      height: 100%;\n      /* Assume no wins */\n      width: 0%;\n      position: relative;\n      background-color: var(--color-absent);\n      display: flex;\n      justify-content: center;\n    }\n\n    .graph-container .graph .graph-bar.highlight {\n      background-color: var(--color-correct);\n    }\n\n    .graph-container .graph .graph-bar.align-right {\n      justify-content: flex-end;\n      padding-right: 8px;\n    }\n\n    .graph-container .graph .num-guesses {\n      font-weight: bold;\n      color: var(--tile-text-color);\n    }\n\n    #statistics,\n    #guess-distribution {\n      padding-bottom: 10px;\n    }\n\n    .footer {\n      display: flex;\n      width: 100%;\n    }\n\n    .countdown {\n      border-right: 1px solid var(--color-tone-1);\n      padding-right: 12px;\n      width: 50%;\n    }\n\n    .share {\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      padding-left: 12px;\n      width: 50%;\n    }\n\n    button#share-button {\n      background-color: var(--key-bg-correct);\n      color: var(--key-evaluated-text-color);\n      font-family: inherit;\n      font-weight: bold;\n      border-radius: 4px;\n      cursor: pointer;\n      border: none;\n      user-select: none;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      text-transform: uppercase;\n      -webkit-tap-highlight-color: rgba(0,0,0,0.3);\n      width: 80%;\n      font-size: 20px;\n      height: 52px;\n      -webkit-filter: brightness(100%);\n    }\n    button#share-button:hover {\n      opacity: 0.9;\n    }\n    button#share-button game-icon {\n      width: 24px;\n      height: 24px;\n      padding-left: 8px;\n    }\n  </style>\n\n  <div class="container">\n    <h1>Statistiche</h1>\n    <div id="statistics"></div>\n    <h1>Distribuzione dei tentativi</h1>\n    <div id="guess-distribution"></div>\n    <div class="footer">\n      <div class="countdown">\n        <h1>Prossimo PARLE</h1>\n        <div id="timer">\n          <div class="statistic-container">\n            <div class="statistic timer">\n              <countdown-timer></countdown-timer>\n            </div>\n          </div>\n        </div>\n      </div>\n      <div class="share">\n        <button id="share-button">\n          Condividi \n        </button>\n      </div>\n    </div>\n  </div>\n';
+  cs.innerHTML = `
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 16px;
+      font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+      max-width: 400px;
+      margin: auto;
+      background-color: var(--color-background);
+      color: var(--color-tone-1);
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #leaderboard {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border-bottom: 1px solid var(--color-tone-4);
+      font-size: 16px;
+    }
+
+    .player-name {
+      font-weight: 500;
+    }
+
+    .player-attempts {
+      font-weight: bold;
+    }
+  </style>
+
+  <div class="container">
+    <h1>Classifica di oggi</h1>
+    <div id="leaderboard">
+      <!-- I giocatori verranno inseriti dinamicamente qui -->
+    </div>
+  </div>
+`;
   var ps = document.createElement("template");
   ps.innerHTML = '\n  <div class="statistic-container">\n    <div class="statistic"></div>\n    <div class="label"></div>\n  </div>\n';
   var ms = document.createElement("template");
@@ -1403,81 +1455,80 @@ this.wordle = this.wordle || {}, this.wordle.bundle = function(e) {
           }
           return o(t, [{
               key: "connectedCallback",
-              value: function() {
-                  var e = this;
-                  this.shadowRoot.appendChild(cs.content.cloneNode(!0));
-                  for (var a = this.shadowRoot.getElementById("statistics"), s = this.shadowRoot.getElementById("guess-distribution"), t = Math.max.apply(Math, g(Object.values(this.stats.guesses))), o = 1; o < Object.keys(this.stats.guesses).length; o++) {
-                      var r = o,
-                          n = this.stats.guesses[o],
-                          i = ms.content.cloneNode(!0),
-                          l = Math.max(7, Math.round(n / t * 100));
-                      i.querySelector(".guess").textContent = r;
-                      var d = i.querySelector(".graph-bar");
-                      if (d.style.width = "".concat(l, "%"), "number" == typeof n) {
-                          i.querySelector(".num-guesses").textContent = n, n > 0 && d.classList.add("align-right");
-                          var u = parseInt(this.getAttribute("highlight-guess"), 10);
-                          u && o === u && d.classList.add("highlight")
-                      }
-                      s.appendChild(i)
-                  } ["gamesPlayed", "winPercentage", "currentStreak", "maxStreak"].forEach((function(s) {
-                      var t = hs[s],
-                          o = e.stats[s],
-                          r = ps.content.cloneNode(!0);
-                      r.querySelector(".label").textContent = t, r.querySelector(".statistic").textContent = o, a.appendChild(r)
-                  })), this.shadowRoot.querySelector("button#share-button").addEventListener("click", (function(a) {
-                      a.preventDefault(), a.stopPropagation();
-                      us(function(e) {
-                          var a = e.evaluations,
-                              s = e.dayOffset,
-                              t = e.rowIndex,
-                              o = e.isHardMode,
-                              r = e.isWin,
-                              n = JSON.parse(window.localStorage.getItem(j)),
-                              i = JSON.parse(window.localStorage.getItem(S)),
-                              l = "Par🇮🇹le n°".concat(s);
-                          l += " ".concat(r ? t : "X", "/").concat(6), o && (l += "*");
-                          var d = "";
-                          return a.forEach((function(e) {
-                              e && (e.forEach((function(e) {
-                                  if (e) {
-                                      var a = "";
-                                      switch (e) {
-                                          case Ia:
-                                              a = function(e) {
-                                                  return e ? "🟧" : "🟩"
-                                              }(i);
-                                              break;
-                                          case Ta:
-                                              a = function(e) {
-                                                  return e ? "🟦" : "🟨"
-                                              }(i);
-                                              break;
-                                          case Ca:
-                                              a = function(e) {
-                                                  return e ? "⬛" : "⬜"
-                                              }(n)
-                                      }
-                                      d += a
-                                  }
-                              })), d += "\n")
-                          })), {
-                              text: "".concat(l, "\n\n").concat(d.trimEnd())
-                          }
-                      }({
-                          evaluations: e.gameApp.evaluations,
-                          dayOffset: e.gameApp.dayOffset,
-                          rowIndex: e.gameApp.rowIndex,
-                          isHardMode: e.gameApp.hardMode,
-                          isWin: e.gameApp.gameStatus === Za
-                      }), (function() {
-                          e.gameApp.addToast("Risultati copiati", 2e3, !0)
-                      }), (function() {
-                          e.gameApp.addToast("Errore nella condivisione", 2e3, !0)
-                      }))
-                  }))
-              }
-          }]), t
-      }(c(HTMLElement));
+value: async function() {
+    var e = this;
+    
+    // Puliamo lo shadow root e mettiamo il nuovo container
+    this.shadowRoot.innerHTML = `
+      <style>
+        .container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 16px;
+          font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+          max-width: 400px;
+          margin: auto;
+          background-color: var(--color-background);
+          color: var(--color-tone-1);
+        }
+        h1 {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 16px;
+          text-align: center;
+        }
+        #leaderboard {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .player-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px;
+          border-bottom: 1px solid var(--color-tone-4);
+          font-size: 16px;
+        }
+        .player-name { font-weight: 500; }
+        .player-attempts { font-weight: bold; }
+      </style>
+      <div class="container">
+        <h1>Classifica di oggi</h1>
+        <div id="leaderboard"></div>
+      </div>
+    `;
+    
+    const leaderboardEl = this.shadowRoot.querySelector("#leaderboard");
+    
+    // Recuperiamo la data di oggi
+    const todayKey = new Date().toISOString().split("T")[0];
+    
+    // Leggiamo da Firebase
+    const snapshot = await firebase.firestore()
+      .collection("scores")
+      .doc(todayKey)
+      .collection("players")
+      .get();
+    
+    let results = [];
+    snapshot.forEach(doc => {
+      results.push({ name: doc.id, attempts: doc.data().attempts });
+    });
+    
+    // Ordiniamo per tentativi minori
+    results.sort((a,b) => a.attempts - b.attempts);
+    
+    // Popoliamo il container
+    results.forEach((r, i) => {
+      const row = document.createElement("div");
+      row.classList.add("player-row");
+      row.innerHTML = `<span class="player-name">${r.name}</span><span class="player-attempts">${r.attempts}</span>`;
+      leaderboardEl.appendChild(row);
+    });
+}
   customElements.define("game-stats", ys);
   var gs = document.createElement("template");
   gs.innerHTML = '\n  <style>\n    :host {\n    }\n    .container {\n      display: flex;\n      justify-content: space-between;\n    }\n    .switch {\n      height: 20px;\n      width: 32px;\n      vertical-align: middle;\n      /* not quite right */\n      background: var(--color-tone-3);\n      border-radius: 999px;\n      display: block;\n      position: relative;\n    }\n    .knob {\n      display: block;\n      position: absolute;\n      left: 2px;\n      top: 2px;\n      height: calc(100% - 4px);\n      width: 50%;\n      border-radius: 8px;\n      background: var(--white);\n      transform: translateX(0);\n      transition: transform 0.3s;\n    }\n    :host([checked]) .switch {\n      background: var(--color-correct);\n    }\n    :host([checked]) .knob {\n      transform: translateX(calc(100% - 4px));\n    }\n    :host([disabled]) .switch {\n      opacity: 0.5;\n    }\n  </style>\n  <div class="container">\n    <label><slot></slot></label>\n    <div class="switch">\n      <span class="knob"></div>\n    </div>\n  </div>\n';
