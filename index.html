@@ -1,321 +1,262 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
-    <title>Par🇮🇹le - Un gioco di parole al giorno (Wordle in italiano)</title>
-    <!--<meta name="description" content="Guess the hidden word in 6 tries. A new puzzle is available each day.">-->
-    <meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
-    
-    <!-- FB Meta Tags -->
-    <meta property="og:url" content="https://pietroppeter.github.io/wordle-it/wordle.html">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Par🇮🇹le - Un gioco di parole al giorno (Wordle in italiano)">
-    <meta property="og:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
-    <meta property="og:image" content="https://pietroppeter.github.io/wordle-it/images/parle_og_1200x630.png">
+<title>Par🇮🇹le - Un gioco di parole al giorno (Wordle in italiano)</title>
+<!--<meta name="description" content="Guess the hidden word in 6 tries. A new puzzle is available each day.">-->
+<meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
 
-    <!-- Twitter Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="twitter:domain" content="pietroppeter.github.io/wordle-it">
+<!-- FB Meta Tags -->
+<meta property="og:url" content="https://pietroppeter.github.io/wordle-it/wordle.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Par🇮🇹le - Un gioco di parole al giorno (Wordle in italiano)">
+<meta property="og:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
+<meta property="og:image" content="https://pietroppeter.github.io/wordle-it/images/parle_og_1200x630.png">
 
-    <meta name="theme-color" content="#6aaa64" />
-    <link rel="manifest" href="manifest.json" />
-    <link href="images/parle_logo_32x32.png" rel="icon shortcut" sizes="3232" />
-    <link href="images/parle_logo_192x192.png" rel="apple-touch-icon" />
-    <script>
-     function randomAnalytics() {
-      // analytics are loaded once every X times
-      const times = 40;
+<!-- Twitter Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta property="twitter:domain" content="pietroppeter.github.io/wordle-it">
 
-      // pick a random number
-      var index = Math.floor(Math.random()*times);
-      console.log(index)
+<meta name="theme-color" content="#6aaa64" />
+<link rel="manifest" href="manifest.json" />
+<link href="images/parle_logo_32x32.png" rel="icon shortcut" sizes="3232" />
+<link href="images/parle_logo_192x192.png" rel="apple-touch-icon" />
+<script>
+function randomAnalytics() {
+// analytics are loaded once every X times
+const times = 40;
 
-      if (index === 0) {
-        console.log("loading analytics")
-        // Append JS file to head section.
-        var script = document.createElement('script');
-        script.defer = true
-        script.setAttribute('data-domain', 'pietroppeter.github.io/wordle-it')
-        script.src = 'https://plausible.io/js/plausible.js';
-        document.getElementsByTagName('head')[0].appendChild(script);	
-      }
-      else {
-        console.log("NOT loading analytics")
-      }
-     };
-    </script>
-    <style>
-      /* Global Styles & Colors */
-      :root {
-        --green: #6aaa64;
-        --darkendGreen: #538d4e;
-        --yellow: #c9b458;
-        --darkendYellow: #b59f3b;
-        --lightGray: #d8d8d8;
-        --gray: #86888a;
-        --darkGray: #939598;
-        --white: #fff;
-        --black: #212121;
-        /* Colorblind colors */
-        --orange: #f5793a;
-        --blue: #85c0f9;
-        font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
-        font-size: 16px;
-        --header-height: 50px;
-        --keyboard-height: 200px;
-        --game-max-width: 500px;
-      }
-      /* Light theme colors */
-      :root {
-        --color-tone-1: #1a1a1b;
-        --color-tone-2: #787c7e;
-        --color-tone-3: #878a8c;
-        --color-tone-4: #d3d6da;
-        --color-tone-5: #edeff1;
-        --color-tone-6: #f6f7f8;
-        --color-tone-7: #ffffff;
-        --opacity-50: rgba(255, 255, 255, 0.5);
-      }
-      /* Dark Theme Colors */
-      .nightmode {
-        --color-tone-1: #d7dadc;
-        --color-tone-2: #818384;
-        --color-tone-3: #565758;
-        --color-tone-4: #3a3a3c;
-        --color-tone-5: #272729;
-        --color-tone-6: #1a1a1b;
-        --color-tone-7: #121213;
-        --opacity-50: rgba(0, 0, 0, 0.5);
-      }
-      /* Constant colors and colors derived from theme */
-      :root,
-      .nightmode {
-        --color-background: var(--color-tone-7);
-      }
-      :root {
-        --color-present: var(--yellow);
-        --color-correct: var(--green);
-        --color-absent: var(--color-tone-2);
-        --tile-text-color: var(--color-tone-7);
-        --key-text-color: var(--color-tone-1);
-        --key-evaluated-text-color: var(--color-tone-7);
-        --key-bg: var(--color-tone-4);
-        --key-bg-present: var(--color-present);
-        --key-bg-correct: var(--color-correct);
-        --key-bg-absent: var(--color-absent);
-        --modal-content-bg: var(--color-tone-7);
-      }
-      .nightmode {
-        --color-present: var(--darkendYellow);
-        --color-correct: var(--darkendGreen);
-        --color-absent: var(--color-tone-4);
-        --tile-text-color: var(--color-tone-1);
-        --key-text-color: var(--color-tone-1);
-        --key-evaluated-text-color: var(--color-tone-1);
-        --key-bg: var(--color-tone-2);
-        --key-bg-present: var(--color-present);
-        --key-bg-correct: var(--color-correct);
-        --key-bg-absent: var(--color-absent);
-        --modal-content-bg: var(--color-tone-7);
-      }
-      .colorblind {
-        --color-correct: var(--orange);
-        --color-present: var(--blue);
-        --tile-text-color: var(--white);
-        --key-bg-present: var(--color-present);
-        --key-bg-correct: var(--color-correct);
-        --key-bg-absent: var(--color-absent);
-      }
-      html {
-        height: 100%;
-      }
-      body {
-        height: 100%;
-        background-color: var(--color-background);
-        margin: 0;
-        padding: 0;
-        /* Prevent scrollbar appearing on page transition */
-        overflow-y: hidden;
-      }
-    </style>
-  </head>
-  <body onload="randomAnalytics();">
-    <script>
-      (function () {
-        // Defining the hash before the main bundle allows the bundle access window.hash
-        window.wordle = window.wordle || {};
-        window.wordle.hash = 'parle v220317';
-      })();
-    </script>
-    <script src="wordle-it.js"></script>
-    <game-app></game-app>
-    <!-- FIREBASE -->
+// pick a random number
+var index = Math.floor(Math.random()*times);
+console.log(index)
+
+if (index === 0) {
+console.log("loading analytics")
+// Append JS file to head section.
+var script = document.createElement('script');
+script.defer = true
+script.setAttribute('data-domain', 'pietroppeter.github.io/wordle-it')
+script.src = 'https://plausible.io/js/plausible.js';
+document.getElementsByTagName('head')[0].appendChild(script);	
+}
+else {
+console.log("NOT loading analytics")
+}
+};
+</script>
+<style>
+/* Global Styles & Colors */
+:root {
+--green: #6aaa64;
+--darkendGreen: #538d4e;
+--yellow: #c9b458;
+--darkendYellow: #b59f3b;
+--lightGray: #d8d8d8;
+--gray: #86888a;
+--darkGray: #939598;
+--white: #fff;
+--black: #212121;
+/* Colorblind colors */
+--orange: #f5793a;
+--blue: #85c0f9;
+font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+font-size: 16px;
+--header-height: 50px;
+--keyboard-height: 200px;
+--game-max-width: 500px;
+}
+/* Light theme colors */
+:root {
+--color-tone-1: #1a1a1b;
+--color-tone-2: #787c7e;
+--color-tone-3: #878a8c;
+--color-tone-4: #d3d6da;
+--color-tone-5: #edeff1;
+--color-tone-6: #f6f7f8;
+--color-tone-7: #ffffff;
+--opacity-50: rgba(255, 255, 255, 0.5);
+}
+/* Dark Theme Colors */
+.nightmode {
+--color-tone-1: #d7dadc;
+--color-tone-2: #818384;
+--color-tone-3: #565758;
+--color-tone-4: #3a3a3c;
+--color-tone-5: #272729;
+--color-tone-6: #1a1a1b;
+--color-tone-7: #121213;
+--opacity-50: rgba(0, 0, 0, 0.5);
+}
+/* Constant colors and colors derived from theme */
+:root,
+.nightmode {
+--color-background: var(--color-tone-7);
+}
+:root {
+--color-present: var(--yellow);
+--color-correct: var(--green);
+--color-absent: var(--color-tone-2);
+--tile-text-color: var(--color-tone-7);
+--key-text-color: var(--color-tone-1);
+--key-evaluated-text-color: var(--color-tone-7);
+--key-bg: var(--color-tone-4);
+--key-bg-present: var(--color-present);
+--key-bg-correct: var(--color-correct);
+--key-bg-absent: var(--color-absent);
+--modal-content-bg: var(--color-tone-7);
+}
+.nightmode {
+--color-present: var(--darkendYellow);
+--color-correct: var(--darkendGreen);
+--color-absent: var(--color-tone-4);
+--tile-text-color: var(--color-tone-1);
+--key-text-color: var(--color-tone-1);
+--key-evaluated-text-color: var(--color-tone-1);
+--key-bg: var(--color-tone-2);
+--key-bg-present: var(--color-present);
+--key-bg-correct: var(--color-correct);
+--key-bg-absent: var(--color-absent);
+--modal-content-bg: var(--color-tone-7);
+}
+.colorblind {
+--color-correct: var(--orange);
+--color-present: var(--blue);
+--tile-text-color: var(--white);
+--key-bg-present: var(--color-present);
+--key-bg-correct: var(--color-correct);
+--key-bg-absent: var(--color-absent);
+}
+html {
+height: 100%;
+}
+body {
+height: 100%;
+background-color: var(--color-background);
+margin: 0;
+padding: 0;
+/* Prevent scrollbar appearing on page transition */
+overflow-y: hidden;
+}
+</style>
+</head>
+<body onload="randomAnalytics();">
+<script>
+(function () {
+// Defining the hash before the main bundle allows the bundle access window.hash
+window.wordle = window.wordle || {};
+window.wordle.hash = 'parle v220317';
+})();
+</script>
+<script src="wordle-it.js"></script>
+<game-app></game-app>
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
-  // CONFIGURAZIONE FIREBASE
-  const firebaseConfig = {
-    apiKey: "AIzaSyAR_d84pgAreyt4dDqxgGvN8VPl8kmgCfc",
-    authDomain: "parole-sirius.firebaseapp.com",
-    projectId: "parole-sirius",
-    storageBucket: "parole-sirius.firebasestorage.app",
-    messagingSenderId: "429496599887",
-    appId: "1:429496599887:web:5b9bff17b7944370c8713a"
-  };
+// CONFIGURAZIONE FIREBASE
+const firebaseConfig = {
+apiKey: "AIzaSyAR_d84pgAreyt4dDqxgGvN8VPl8kmgCfc",
+authDomain: "parole-sirius.firebaseapp.com",
+projectId: "parole-sirius",
+storageBucket: "parole-sirius.firebasestorage.app",
+messagingSenderId: "429496599887",
+appId: "1:429496599887:web:5b9bff17b7944370c8713a"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  // -------- NOME GIOCATORE --------
-  let playerName = localStorage.getItem("playerName");
+// -------- NOME GIOCATORE --------
+let playerName = localStorage.getItem("playerName");
 
-  if (!playerName) {
-    playerName = prompt("Inserisci il tuo nome per la classifica:");
-    if (playerName) {
-      localStorage.setItem("playerName", playerName);
-    }
-  }
+if (!playerName) {
+playerName = prompt("Inserisci il tuo nome per la classifica:");
+if (playerName) {
+localStorage.setItem("playerName", playerName);
+}
+}
 
-  // -------- DATA DI OGGI --------
-  function getTodayKey() {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  }
+// -------- DATA DI OGGI --------
+function getTodayKey() {
+const today = new Date();
+return today.toISOString().split("T")[0];
+}
 
-  // -------- SALVA RISULTATO --------
-  async function saveScore(attempts) {
-    const todayKey = getTodayKey();
+// -------- SALVA RISULTATO --------
+async function saveScore(attempts) {
+const todayKey = getTodayKey();
 
-    await db.collection("scores")
-      .doc(todayKey)
-      .collection("players")
-      .doc(playerName)
-      .set({
-        attempts: attempts,
-        timestamp: new Date()
-      });
+await db.collection("scores")
+.doc(todayKey)
+.collection("players")
+.doc(playerName)
+.set({
+attempts: attempts,
+timestamp: new Date()
+});
 
-    showLeaderboard();
-  }
+showLeaderboard();
+}
 
-  // -------- MOSTRA CLASSIFICA --------
-  async function showLeaderboard() {
-    const todayKey = getTodayKey();
+// -------- MOSTRA CLASSIFICA --------
+async function showLeaderboard() {
+const todayKey = getTodayKey();
 
-    const snapshot = await db.collection("scores")
-      .doc(todayKey)
-      .collection("players")
-      .get();
+const snapshot = await db.collection("scores")
+.doc(todayKey)
+.collection("players")
+.get();
 
-    let results = [];
+let results = [];
 
-    snapshot.forEach(doc => {
-      results.push({
-        name: doc.id,
-        attempts: doc.data().attempts
-      });
-    });
+snapshot.forEach(doc => {
+results.push({
+name: doc.id,
+attempts: doc.data().attempts
+});
+});
 
-    results.sort((a,b) => a.attempts - b.attempts);
+results.sort((a,b) => a.attempts - b.attempts);
 
-    let message = "🏆 Classifica di oggi:\n\n";
-    results.forEach((r,i) => {
-      message += (i+1) + ". " + r.name + " - " + r.attempts + " tentativi\n";
-    });
+let message = "🏆 Classifica di oggi:\n\n";
+results.forEach((r,i) => {
+message += (i+1) + ". " + r.name + " - " + r.attempts + " tentativi\n";
+});
 
-    alert(message);
-  }   
+alert(message);
+}
+
 </script>
     <script>
 
-window.addEventListener("load", () => {
+  // Aspetta che il gioco sia caricato
+  window.addEventListener("load", () => {
+    const gameApp = document.querySelector("game-app");
 
-  const game = document.querySelector("game-app");
+    // Aspetta che sia inizializzato
+    setTimeout(() => {
 
-  setTimeout(() => {
+      // Sovrascrive la funzione che mostra le statistiche
+      gameApp.showStatsModal = async function() {
 
-    const shadow = game.shadowRoot;
+        const attempts = this.rowIndex; // numero tentativi
+        const won = this.gameStatus === 1; // 1 = win
 
-    const statsComponent = shadow.querySelector("game-stats");
+        if (!won) {
+          await saveScore(99); // 99 = perso
+        } else {
+          await saveScore(attempts);
+        }
 
-    // intercettiamo quando viene aperto
-    const originalOpen = statsComponent.open;
+      };
 
-    statsComponent.open = async function() {
+    }, 2000);
 
-      // chiamiamo il metodo originale
-      originalOpen.call(this);
+  });
 
-      // aspettiamo che venga renderizzato
-      setTimeout(async () => {
-
-        const statsShadow = statsComponent.shadowRoot;
-
-        // trova contenitore principale
-        const container = statsShadow.querySelector(".stats");
-
-        if (!container) return;
-
-        // calcoliamo tentativi reali
-        const rows = shadow.querySelectorAll(".row");
-
-        let attempts = 99;
-
-        rows.forEach((row, index) => {
-          if (row.classList.contains("correct")) {
-            attempts = index + 1;
-          }
-        });
-
-        await saveScore(attempts);
-
-        // PULIAMO CONTENUTO
-        container.innerHTML = `
-          <h2 style="text-align:center;">🏆 Classifica di oggi</h2>
-          <div id="leaderboardContent" style="margin-top:20px;"></div>
-        `;
-
-        // carichiamo classifica
-        const todayKey = getTodayKey();
-
-        const snapshot = await db.collection("scores")
-          .doc(todayKey)
-          .collection("players")
-          .get();
-
-        let results = [];
-
-        snapshot.forEach(doc => {
-          results.push({
-            name: doc.id,
-            attempts: doc.data().attempts
-          });
-        });
-
-        results.sort((a,b) => a.attempts - b.attempts);
-
-        const leaderboardDiv = statsShadow.querySelector("#leaderboardContent");
-
-        results.forEach((r,i) => {
-          const row = document.createElement("div");
-          row.style.marginBottom = "8px";
-          row.innerHTML = `
-            ${i+1}. ${r.name} - ${r.attempts === 99 ? "❌ Perso" : r.attempts + " tentativi"}
-          `;
-          leaderboardDiv.appendChild(row);
-        });
-
-      }, 200);
-
-    };
-
-  }, 1500);
-
-});
-
-</script>
-  </body>
+</script>  
+</body>
 </html>
