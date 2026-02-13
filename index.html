@@ -1,106 +1,189 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+  <title>Par🇮🇹le - Un gioco di parole al giorno</title>
+  <meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
+
+  <meta name="theme-color" content="#6aaa64" />
+  <link rel="manifest" href="manifest.json" />
+  <link href="images/parle_logo_32x32.png" rel="icon shortcut" sizes="3232" />
+  <link href="images/parle_logo_192x192.png" rel="apple-touch-icon" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-y: hidden;
+      background-color: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
 <script>
+  window.wordle = window.wordle || {};
+  window.wordle.hash = 'parle custom leaderboard';
+</script>
 
-window.addEventListener("load", () => {
+<script src="wordle-it.js"></script>
+<game-app></game-app>
 
-  // Osserva quando viene aperto il popup statistiche
-  const observer = new MutationObserver(async (mutations) => {
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-    for (const mutation of mutations) {
+<script>
+  // CONFIG FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyAR_d84pgAreyt4dDqxgGvN8VPl8kmgCfc",
+    authDomain: "parole-sirius.firebaseapp.com",
+    projectId: "parole-sirius",
+    storageBucket: "parole-sirius.firebasestorage.app",
+    messagingSenderId: "429496599887",
+    appId: "1:429496599887:web:5b9bff17b7944370c8713a"
+  };
 
-      for (const node of mutation.addedNodes) {
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-        if (node.nodeType === 1) {
+  // NOME GIOCATORE
+  let playerName = localStorage.getItem("playerName");
 
-          // Cerca il popup statistiche
-          if (node.innerText && node.innerText.includes("Statistiche")) {
+  if (!playerName) {
+    playerName = prompt("Inserisci il tuo nome per la classifica:");
+    if (playerName) {
+      localStorage.setItem("playerName", playerName);
+    }
+  }
 
-            // Trova numero tentativi leggendo la griglia
-            const rows = document.querySelectorAll("game-app")
-              [0]
-              .shadowRoot
-              .querySelectorAll(".row");
+  // DATA GIORNALIERA
+  function getTodayKey() {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  }
 
-            let attempts = 99;
+  // SALVA RISULTATO
+  async function saveScore(attempts) {
+    const todayKey = getTodayKey();
 
-            rows.forEach((row, index) => {
-              if (row.classList.contains("correct")) {
-                attempts = index + 1;
-              }
-            });
+    await db.collection("scores")
+      .doc(todayKey)
+      .collection("players")
+      .doc(playerName)
+      .set({
+        attempts: attempts,
+        timestamp: new Date()
+      });
+  }
 
-            await saveScore(attempts);
+  // MOSTRA CLASSIFICA
+  async function showLeaderboardModal() {
 
-            // Rimuove popup statistiche
-            node.remove();
+    const todayKey = getTodayKey();
 
-            showLeaderboardModal();
+    const snapshot = await db.collection("scores")
+      .doc(todayKey)
+      .collection("players")
+      .get();
+
+    let results = [];
+
+    snapshot.forEach(doc => {
+      results.push({
+        name: doc.id,
+        attempts: doc.data().attempts
+      });
+    });
+
+    results.sort((a,b) => a.attempts - b.attempts);
+
+    const modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background = "rgba(0,0,0,0.8)";
+    modal.style.display = "flex";
+    modal.style.justifyContent = "center";
+    modal.style.alignItems = "center";
+    modal.style.zIndex = "9999";
+
+    let html = `
+      <div style="background:white;padding:30px;border-radius:10px;max-width:400px;width:90%;text-align:center;">
+        <h2>🏆 Classifica di oggi</h2>
+    `;
+
+    results.forEach((r,i) => {
+      html += `<p>${i+1}. ${r.name} - ${r.attempts === 99 ? "❌ Perso" : r.attempts + " tentativi"}</p>`;
+    });
+
+    html += `
+        <button onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 20px;">Chiudi</button>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+  }
+
+  // INTERCETTA FINE PARTITA E SOSTITUISCE STATISTICHE
+  window.addEventListener("load", () => {
+
+    const observer = new MutationObserver(async (mutations) => {
+
+      for (const mutation of mutations) {
+
+        for (const node of mutation.addedNodes) {
+
+          if (node.nodeType === 1 && node.innerText?.includes("Statistiche")) {
+
+            try {
+
+              const game = document.querySelector("game-app");
+              const shadow = game.shadowRoot;
+              const rows = shadow.querySelectorAll(".row");
+
+              let attempts = 99;
+
+              rows.forEach((row, index) => {
+                if (row.classList.contains("correct")) {
+                  attempts = index + 1;
+                }
+              });
+
+              await saveScore(attempts);
+
+              node.remove();
+
+              showLeaderboardModal();
+
+            } catch (err) {
+              console.log(err);
+            }
+
           }
 
         }
 
       }
 
-    }
-
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
-});
-
-
-// -------- CLASSIFICA GRAFICA --------
-async function showLeaderboardModal() {
-
-  const todayKey = getTodayKey();
-
-  const snapshot = await db.collection("scores")
-    .doc(todayKey)
-    .collection("players")
-    .get();
-
-  let results = [];
-
-  snapshot.forEach(doc => {
-    results.push({
-      name: doc.id,
-      attempts: doc.data().attempts
     });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
   });
-
-  results.sort((a,b) => a.attempts - b.attempts);
-
-  const modal = document.createElement("div");
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.background = "rgba(0,0,0,0.8)";
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = "9999";
-
-  let html = `
-    <div style="background:white;padding:30px;border-radius:10px;max-width:400px;width:90%;text-align:center;">
-      <h2>🏆 Classifica di oggi</h2>
-  `;
-
-  results.forEach((r,i) => {
-    html += `<p>${i+1}. ${r.name} - ${r.attempts === 99 ? "❌ Perso" : r.attempts + " tentativi"}</p>`;
-  });
-
-  html += `
-      <button onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 20px;">Chiudi</button>
-    </div>
-  `;
-
-  modal.innerHTML = html;
-  document.body.appendChild(modal);
-}
 
 </script>
+
+</body>
+</html>
