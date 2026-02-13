@@ -244,7 +244,8 @@ window.addEventListener("load", () => {
 
         for (const node of mutation.addedNodes) {
 
-          if (node.nodeType === 1 && node.innerText?.includes("Statistiche")) {
+          // intercettiamo proprio il componente game-stats
+          if (node.nodeName === "GAME-STATS") {
 
             try {
 
@@ -260,8 +261,10 @@ window.addEventListener("load", () => {
 
               await saveScore(attempts);
 
+              // rimuove il popup originale
               node.remove();
 
+              // mostra la nostra classifica
               showLeaderboardModal();
 
             } catch (err) {
@@ -281,7 +284,7 @@ window.addEventListener("load", () => {
       subtree: true
     });
 
-  }, 2000);
+  }, 1500);
 
 });
 
@@ -312,7 +315,7 @@ async function showLeaderboardModal() {
   modal.style.left = "0";
   modal.style.width = "100%";
   modal.style.height = "100%";
-  modal.style.background = "rgba(0,0,0,0.8)";
+  modal.style.background = "rgba(0,0,0,0.85)";
   modal.style.display = "flex";
   modal.style.justifyContent = "center";
   modal.style.alignItems = "center";
