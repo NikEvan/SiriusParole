@@ -233,47 +233,55 @@
 
 window.addEventListener("load", () => {
 
-  const observer = new MutationObserver(async (mutations) => {
+  setTimeout(() => {
 
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
+    const game = document.querySelector("game-app");
+    const shadow = game.shadowRoot;
 
-        if (node.nodeType === 1 && node.innerText?.includes("Statistiche")) {
+    const observer = new MutationObserver(async (mutations) => {
 
-          try {
+      for (const mutation of mutations) {
 
-            const game = document.querySelector("game-app");
-            const shadow = game.shadowRoot;
-            const rows = shadow.querySelectorAll(".row");
+        for (const node of mutation.addedNodes) {
 
-            let attempts = 99;
+          if (node.nodeType === 1 && node.innerText?.includes("Statistiche")) {
 
-            rows.forEach((row, index) => {
-              if (row.classList.contains("correct")) {
-                attempts = index + 1;
-              }
-            });
+            try {
 
-            await saveScore(attempts);
+              const rows = shadow.querySelectorAll(".row");
 
-            node.remove();
-            showLeaderboardModal();
+              let attempts = 99;
 
-          } catch (err) {
-            console.log("Errore:", err);
+              rows.forEach((row, index) => {
+                if (row.classList.contains("correct")) {
+                  attempts = index + 1;
+                }
+              });
+
+              await saveScore(attempts);
+
+              node.remove();
+
+              showLeaderboardModal();
+
+            } catch (err) {
+              console.log("Errore:", err);
+            }
+
           }
 
         }
 
       }
-    }
 
-  });
+    });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+    observer.observe(shadow, {
+      childList: true,
+      subtree: true
+    });
+
+  }, 2000);
 
 });
 
@@ -329,5 +337,6 @@ async function showLeaderboardModal() {
 }
 
 </script>
+
   </body>
 </html>
