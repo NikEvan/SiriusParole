@@ -151,6 +151,10 @@ window.wordle.hash = 'parle v220317';
 </script>
 <script type="module" src="wordle-it.js"></script>
 <game-app></game-app>
+  
+<!-- CONTAINER CLASSIFICA -->
+<div id="leaderboardBox" style="max-width:400px;margin:20px auto;color:white;text-align:center;"></div>
+  
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -230,16 +234,9 @@ async function showLeaderboard() {
     box.innerHTML += `<div>${i+1}. ${r.name} - ${r.attempts}</div>`;
   });
 }
-}
 
 </script>
-    <script>
-
-  <!-- QUI NASCE IL GIOCO -->
-
-<!-- CONTAINER CLASSIFICA -->
-<div id="leaderboardBox" style="max-width:400px;margin:20px auto;color:white;"></div>
-
+    
 <script>
   // Aspetta che il gioco sia caricato
   window.addEventListener("load", () => {
@@ -266,6 +263,23 @@ async function showLeaderboard() {
       };
     }, 2000);
   });
+</script>
+  <div id="nameModal" class="name-modal">
+  <div class="name-box">
+    <h2>Inserisci il tuo nome</h2>
+    <input type="text" id="playerNameInput" placeholder="Il tuo nome..." />
+    <button onclick="savePlayerName()">Inizia</button>
+  </div>
+</div>
+  <script>
+function savePlayerName(){
+  const input = document.getElementById("playerNameInput").value.trim();
+  if(input !== ""){
+    playerName = input;
+    localStorage.setItem("playerName", input);
+    document.getElementById("nameModal").style.display="none";
+  }
+}
 </script>
 </body>
 </html>
