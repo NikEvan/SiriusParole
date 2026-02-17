@@ -140,6 +140,54 @@
         overflow-y: hidden;
       }
     </style>
+    <style>
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal{width:min(520px,calc(100vw - 32px));background:#111;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}
+  .modal header{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.10)}
+  .modal header h2{margin:0;font-size:16px;letter-spacing:.3px}
+  .modal .content{padding:16px 18px 18px}
+  .modal .row{display:flex;gap:10px;align-items:center}
+  .modal input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;outline:none;font-size:15px}
+  .modal button{padding:12px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:700}
+  .btn-primary{background:#2ecc71;color:#071b0f}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.15)}
+  .hint{opacity:.8;font-size:13px;margin-top:10px;line-height:1.3}
+  .leaderboard{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+  .lb-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;font-size:14px}
+  .lb-left{display:flex;gap:10px;align-items:center}
+  .pill{min-width:34px;text-align:center;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800}
+  .muted{opacity:.75;font-size:12px}
+</style>
+
+<div id="nameBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+    <header>
+      <h2 id="nameTitle">Inserisci il tuo Nome</h2>
+      <button class="btn-ghost" id="nameCloseBtn" type="button">✕</button>
+    </header>
+    <div class="content">
+      <div class="row">
+        <input id="playerNameInput" maxlength="20" placeholder="Es. Marco" autocomplete="name" />
+        <button class="btn-primary" id="nameOkBtn" type="button">OK</button>
+      </div>
+      <div class="hint">Il nome serve solo per la classifica di oggi.</div>
+    </div>
+  </div>
+</div>
+
+<div id="lbBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+    <header>
+      <h2 id="lbTitle">Classifica di oggi</h2>
+      <button class="btn-ghost" id="lbCloseBtn" type="button">Chiudi</button>
+    </header>
+    <div class="content">
+      <div class="muted" id="lbSubtitle"></div>
+      <div class="leaderboard" id="lbList"></div>
+      <div class="hint" id="lbHint"></div>
+    </div>
+  </div>
+</div>
   </head>
   <body onload="randomAnalytics();">
     <script>
@@ -150,6 +198,7 @@
       })();
     </script>
     <script src="wordle-it.js"></script>
+    <script type="module" src="leaderboard.js"></script>
     <game-app></game-app>
   </body>
 </html>
