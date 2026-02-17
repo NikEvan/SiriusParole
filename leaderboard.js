@@ -69,7 +69,9 @@ function renderLeaderboard(items){
   lbList.innerHTML = "";
   if (!items.length) { lbList.innerHTML = `<div class="muted">Nessun punteggio ancora. Sei il primo 🙂</div>`; return; }
   items.forEach((it, idx) => {
-    const attemptsLabel = (it.status === "win") ? `${it.attempts}/6` : "X";
+    const attemptsLabel = (it.status === "win")
+      ? `${it.attempts}/6`
+      : `<span style="color:#ff4d4d;font-weight:900">X</span>`;
     const safeName = String(it.name || "Anon").replace(/[<>&]/g, "");
     const row = document.createElement("div");
     row.className = "lb-item";
@@ -122,13 +124,21 @@ async function showLeaderboardModal(dayOffset){
     }
 
     const dayOffset = this.dayOffset;
-    let attempts = (typeof this.rowIndex === "number" && this.rowIndex >= 1) ? this.rowIndex : 7;
 
-    if (attempts >= 1 && attempts <= 6) {
-      await upsertScore(dayOffset, name, attempts, "win");
-    } else {
-      await upsertScore(dayOffset, name, 7, "lose");
-    }
+// capiamo se è una vittoria guardando gameStatus (più affidabile del rowIndex)
+const gs = String(this.gameStatus || "").toLowerCase();
+const isWin = gs.includes("win") || gs.includes("won");
+
+// tentativi: se vince usa rowIndex (1..6), altrimenti 7 (così va in fondo)
+let attempts = (typeof this.rowIndex === "number" && this.rowIndex >= 1) ? this.rowIndex : 7;
+
+if (isWin) {
+  // clamp tra 1 e 6
+  attempts = Math.min(Math.max(attempts, 1), 6);
+  await upsertScore(dayOffset, name, attempts, "win");
+} else {
+  await upsertScore(dayOffset, name, 7, "lose");
+}
 
     await showLeaderboardModal(dayOffset);
 
