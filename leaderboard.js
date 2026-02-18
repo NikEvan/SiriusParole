@@ -152,37 +152,50 @@ if (lastDay !== String(currentDayOffset)) {
   
   const originalShowStats = game.showStatsModal?.bind(game);
 
-  game.showStatsModal = async function(){
-    const name = getStoredName();
-    if (!name){
-      nameInput.value = "";
-      openBackdrop(nameBackdrop);
-      setTimeout(() => nameInput.focus(), 50);
-      return;
-    }
+  const originalShowStats = game.showStatsModal?.bind(game);
 
-    const dayOffset = this.dayOffset;
+game.showStatsModal = async function () {
+  const name = getStoredName();
+  if (!name) {
+    nameInput.value = "";
+    openBackdrop(nameBackdrop);
+    setTimeout(() => nameInput.focus(), 50);
+    return;
+  }
 
-// capiamo se è una vittoria guardando gameStatus (più affidabile del rowIndex)
-const gs = String(this.gameStatus || "").toLowerCase();
-const isWin = gs.includes("win") || gs.includes("won");
+  const dayOffset = this.dayOffset;
 
-// tentativi: se vince usa rowIndex (1..6), altrimenti 7 (così va in fondo)
-let attempts = (typeof this.rowIndex === "number" && this.rowIndex >= 1) ? this.rowIndex : 7;
+  // capiamo se è una vittoria guardando gameStatus
+  const gs = String(this.gameStatus || "").toLowerCase();
+  const isWin = gs.includes("win") || gs.includes("won");
 
-if (isWin) {
-  // clamp tra 1 e 6
-  attempts = Math.min(Math.max(attempts, 1), 6);
-  await upsertScore(dayOffset, name, attempts, "win");
-} else {
-  await upsertScore(dayOffset, name, 7, "lose");
-}
+  // tentativi: se vince usa rowIndex (1..6), altrimenti 7
+  let attempts =
+    typeof this.rowIndex === "number" && this.rowIndex >= 1
+      ? this.rowIndex
+      : 7;
 
-    await showLeaderboardModal(dayOffset);
+  if (isWin) {
+    attempts = Math.min(Math.max(attempts, 1), 6);
+    await upsertScore(dayOffset, name, attempts, "win");
+  } else {
+    await upsertScore(dayOffset, name, 7, "lose");
+  }
 
-    // non mostrare più la finestra statistiche originale
-    // originalShowStats?.();
-  };
+  // 👉 MOSTRIAMO SOLO LA NOSTRA LEADERBOARD
+  await showLeaderboardModal(dayOffset);
+
+  // ❌ IMPORTANTISSIMO: NON chiamare MAI le statistiche originali
+  // originalShowStats?.();
+};
+// paracadute: se il gioco prova comunque a mostrare <game-stats>, lo rimuoviamo
+const killStats = () => {
+  const statsEl = document.querySelector("game-stats");
+  if (statsEl) statsEl.remove();
+};
+
+document.addEventListener("click", killStats, true);
+document.addEventListener("keydown", killStats, true);
 
   // se per qualche motivo appare comunque <game-stats>, rimuovilo
   document.addEventListener("click", () => {
