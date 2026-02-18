@@ -32,6 +32,29 @@ const lbList = document.getElementById("lbList");
 const lbSubtitle = document.getElementById("lbSubtitle");
 const lbHint = document.getElementById("lbHint");
 
+// ===== blocco tastiera quando i modali sono aperti =====
+function isAnyModalOpen() {
+  return (nameBackdrop && nameBackdrop.style.display === "flex")
+      || (lbBackdrop && lbBackdrop.style.display === "flex");
+}
+
+nameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    nameOkBtn.click();
+  }
+});
+
+  // lascia solo Tab per muoversi nel form; tutto il resto non deve arrivare al gioco
+  if (e.key !== "Tab") {
+    e.preventDefault();
+  }
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+}, true); // <-- TRUE IMPORTANTISSIMO
+
 nameCloseBtn.addEventListener("click", () => { if (!getStoredName()) return; closeBackdrop(nameBackdrop); });
 lbCloseBtn.addEventListener("click", () => closeBackdrop(lbBackdrop));
 nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameOkBtn.click(); });
