@@ -14,6 +14,8 @@ const firebaseConfig = {
 };
 
 const LS_NAME_KEY = "parle_player_name_v1";
+const LS_DAY_KEY = "parle_name_day_v1";
+let currentDayOffset = null;
 
 function openBackdrop(el){ el.style.display="flex"; el.setAttribute("aria-hidden","false"); }
 function closeBackdrop(el){ el.style.display="none"; el.setAttribute("aria-hidden","true"); }
@@ -55,7 +57,12 @@ nameInput.addEventListener("keydown", (e) => {
   e.stopImmediatePropagation();
 }, true); // <-- TRUE IMPORTANTISSIMO
 
-nameCloseBtn.addEventListener("click", () => { if (!getStoredName()) return; closeBackdrop(nameBackdrop); });
+nameCloseBtn.addEventListener("click", () => {
+  // se non hai confermato il nome per il giorno corrente, non puoi chiudere
+  if (currentDayOffset === null) return;
+  if (localStorage.getItem(LS_DAY_KEY) !== String(currentDayOffset)) return;
+  closeBackdrop(nameBackdrop);
+});
 lbCloseBtn.addEventListener("click", () => closeBackdrop(lbBackdrop));
 nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameOkBtn.click(); });
 
@@ -64,7 +71,10 @@ nameOkBtn.addEventListener("click", () => {
   if (!v) { nameInput.focus(); nameInput.style.borderColor="rgba(255,80,80,.8)"; return; }
   nameInput.style.borderColor="rgba(255,255,255,.12)";
   setStoredName(v);
-  closeBackdrop(nameBackdrop);
+if (currentDayOffset !== null) {
+  localStorage.setItem(LS_DAY_KEY, String(currentDayOffset));
+}
+closeBackdrop(nameBackdrop);
 });
 
 let db, uid;
