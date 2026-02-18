@@ -133,18 +133,23 @@ async function showLeaderboardModal(dayOffset){
 }
 
 (async function main(){
-  if (!getStoredName()){
-    nameInput.value = "";
-    openBackdrop(nameBackdrop);
-    setTimeout(() => nameInput.focus(), 50);
-  }
-
+  
+// il popup nome viene deciso dopo aver letto dayOffset
   await initFirebase();
 
   await customElements.whenDefined("game-app");
   const game = document.querySelector("game-app");
   if (!game) return;
 
+  const lastDay = localStorage.getItem(LS_DAY_KEY);
+const existingName = getStoredName();
+
+if (lastDay !== String(currentDayOffset)) {
+  nameInput.value = existingName || "";
+  openBackdrop(nameBackdrop);
+  setTimeout(() => nameInput.focus(), 50);
+}
+  
   const originalShowStats = game.showStatsModal?.bind(game);
 
   game.showStatsModal = async function(){
