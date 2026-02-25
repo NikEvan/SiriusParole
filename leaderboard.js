@@ -1,7 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, collection, query, orderBy, limit, getDocs, serverTimestamp
+  getFirestore,
+  doc,
+  setDoc,
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -10,19 +18,32 @@ const firebaseConfig = {
   projectId: "parole-sirius",
   storageBucket: "parole-sirius.firebasestorage.app",
   messagingSenderId: "429496599887",
-  appId: "1:429496599887:web:1e609cf40b7c047ec8713a"
+  appId: "1:429496599887:web:1e609cf40b7c047ec8713a",
 };
 
 const LS_NAME_KEY = "parle_player_name_v1";
 const LS_DAY_KEY = "parle_name_day_v1";
 let currentDayOffset = null;
 
-function openBackdrop(el){ el.style.display="flex"; el.setAttribute("aria-hidden","false"); }
-function closeBackdrop(el){ el.style.display="none"; el.setAttribute("aria-hidden","true"); }
-function normalizeName(name){ return (name||"").trim().replace(/\s+/g," ").slice(0,20); }
-function getStoredName(){ return normalizeName(localStorage.getItem(LS_NAME_KEY)); }
-function setStoredName(name){ localStorage.setItem(LS_NAME_KEY, normalizeName(name)); }
+function openBackdrop(el) {
+  el.style.display = "flex";
+  el.setAttribute("aria-hidden", "false");
+}
+function closeBackdrop(el) {
+  el.style.display = "none";
+  el.setAttribute("aria-hidden", "true");
+}
+function normalizeName(name) {
+  return (name || "").trim().replace(/\s+/g, " ").slice(0, 20);
+}
+function getStoredName() {
+  return normalizeName(localStorage.getItem(LS_NAME_KEY));
+}
+function setStoredName(name) {
+  localStorage.setItem(LS_NAME_KEY, normalizeName(name));
+}
 
+// --- UI elements (devono esistere in index.html) ---
 const nameBackdrop = document.getElementById("nameBackdrop");
 const nameInput = document.getElementById("playerNameInput");
 const nameOkBtn = document.getElementById("nameOkBtn");
@@ -34,11 +55,35 @@ const lbList = document.getElementById("lbList");
 const lbSubtitle = document.getElementById("lbSubtitle");
 const lbHint = document.getElementById("lbHint");
 
-// ===== blocco tastiera quando i modali sono aperti =====
+// --- Block keyboard to prevent typing into the grid while a modal is open ---
 function isAnyModalOpen() {
-  return (nameBackdrop && nameBackdrop.style.display === "flex")
-      || (lbBackdrop && lbBackdrop.style.display === "flex");
+  const nameOpen = nameBackdrop && getComputedStyle(nameBackdrop).display === "flex";
+  const lbOpen = lbBackdrop && getComputedStyle(lbBackdrop).display === "flex";
+  return nameOpen || lbOpen;
 }
+
+window.addEventListener(
+  "keydown",
+  (e) => {
+    if (!isAnyModalOpen()) return;
+
+    // allow Tab for accessibility; block everything else from reaching the game
+    if (e.key !== "Tab") e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  },
+  true
+);
+
+// --- Modal buttons ---
+nameCloseBtn.addEventListener("click", () => {
+  // Non permettere di chiudere se non hai confermato il nome per il giorno corrente
+  if (currentDayOffset === null) return;
+  if (localStorage.getItem(LS_DAY_KEY) !== String(currentDayOffset)) return;
+  closeBackdrop(nameBackdrop);
+});
+
+lbCloseBtn.addEventListener("click", () => closeBackdrop(lbBackdrop));
 
 nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
@@ -49,36 +94,26 @@ nameInput.addEventListener("keydown", (e) => {
   }
 });
 
-  // lascia solo Tab per muoversi nel form; tutto il resto non deve arrivare al gioco
-  if (e.key !== "Tab") {
-    e.preventDefault();
-  }
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-}, true); // <-- TRUE IMPORTANTISSIMO
-
-nameCloseBtn.addEventListener("click", () => {
-  // se non hai confermato il nome per il giorno corrente, non puoi chiudere
-  if (currentDayOffset === null) return;
-  if (localStorage.getItem(LS_DAY_KEY) !== String(currentDayOffset)) return;
-  closeBackdrop(nameBackdrop);
-});
-lbCloseBtn.addEventListener("click", () => closeBackdrop(lbBackdrop));
-nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameOkBtn.click(); });
-
 nameOkBtn.addEventListener("click", () => {
   const v = normalizeName(nameInput.value);
-  if (!v) { nameInput.focus(); nameInput.style.borderColor="rgba(255,80,80,.8)"; return; }
-  nameInput.style.borderColor="rgba(255,255,255,.12)";
+  if (!v) {
+    nameInput.focus();
+    nameInput.style.borderColor = "rgba(255,80,80,.8)";
+    return;
+  }
+  nameInput.style.borderColor = "rgba(255,255,255,.12)";
   setStoredName(v);
-if (currentDayOffset !== null) {
-  localStorage.setItem(LS_DAY_KEY, String(currentDayOffset));
-}
-closeBackdrop(nameBackdrop);
+
+  if (currentDayOffset !== null) {
+    localStorage.setItem(LS_DAY_KEY, String(currentDayOffset));
+  }
+  closeBackdrop(nameBackdrop);
 });
 
+// --- Firebase init ---
 let db, uid;
-async function initFirebase(){
+
+async function initFirebase() {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   const auth = getAuth(app);
@@ -86,25 +121,31 @@ async function initFirebase(){
   uid = res.user.uid;
 }
 
-async function upsertScore(dayOffset, name, attempts, status){
+async function upsertScore(dayOffset, name, attempts, status) {
   const ref = doc(db, "leaderboards", String(dayOffset), "scores", uid);
   await setDoc(ref, { name, attempts, status, ts: serverTimestamp() }, { merge: true });
 }
 
-async function fetchLeaderboard(dayOffset){
+async function fetchLeaderboard(dayOffset) {
   const scoresCol = collection(db, "leaderboards", String(dayOffset), "scores");
-  const q = query(scoresCol, orderBy("attempts","asc"), orderBy("ts","asc"), limit(50));
+  const q = query(scoresCol, orderBy("attempts", "asc"), orderBy("ts", "asc"), limit(50));
   const snap = await getDocs(q);
-  return snap.docs.map(d => d.data());
+  return snap.docs.map((d) => d.data());
 }
 
-function renderLeaderboard(items){
+function renderLeaderboard(items) {
   lbList.innerHTML = "";
-  if (!items.length) { lbList.innerHTML = `<div class="muted">Nessun punteggio ancora. Sei il primo 🙂</div>`; return; }
+  if (!items.length) {
+    lbList.innerHTML = `<div class="muted">Nessun punteggio ancora. Sei il primo 🙂</div>`;
+    return;
+  }
+
   items.forEach((it, idx) => {
-    const attemptsLabel = (it.status === "win")
-      ? `${it.attempts}/6`
-      : `<span style="color:#ff4d4d;font-weight:900">X</span>`;
+    const attemptsLabel =
+      it.status === "win"
+        ? `${it.attempts}/6`
+        : `<span style="color:#ff4d4d;font-weight:900">X</span>`;
+
     const safeName = String(it.name || "Anon").replace(/[<>&]/g, "");
     const row = document.createElement("div");
     row.className = "lb-item";
@@ -119,10 +160,11 @@ function renderLeaderboard(items){
   });
 }
 
-async function showLeaderboardModal(dayOffset){
+async function showLeaderboardModal(dayOffset) {
   lbSubtitle.textContent = `Puzzle #${dayOffset}`;
-  lbHint.textContent = `La classifica si aggiorna con i punteggi di oggi.`;
+  lbHint.textContent = `Classifica di oggi (si resetta automaticamente ogni giorno).`;
   openBackdrop(lbBackdrop);
+
   try {
     const items = await fetchLeaderboard(dayOffset);
     renderLeaderboard(items);
@@ -132,74 +174,66 @@ async function showLeaderboardModal(dayOffset){
   }
 }
 
-(async function main(){
-  
-// il popup nome viene deciso dopo aver letto dayOffset
+(async function main() {
+  // 1) Firebase
   await initFirebase();
 
+  // 2) Wait for game component
   await customElements.whenDefined("game-app");
   const game = document.querySelector("game-app");
   if (!game) return;
 
+  // 3) Now we can read dayOffset and decide whether to ask the name
+  currentDayOffset = game.dayOffset;
+
   const lastDay = localStorage.getItem(LS_DAY_KEY);
-const existingName = getStoredName();
+  const existingName = getStoredName();
 
-if (lastDay !== String(currentDayOffset)) {
-  nameInput.value = existingName || "";
-  openBackdrop(nameBackdrop);
-  setTimeout(() => nameInput.focus(), 50);
-}
-  
-  const originalShowStats = game.showStatsModal?.bind(game);
-
-  const originalShowStats = game.showStatsModal?.bind(game);
-
-game.showStatsModal = async function () {
-  const name = getStoredName();
-  if (!name) {
-    nameInput.value = "";
+  if (lastDay !== String(currentDayOffset)) {
+    nameInput.value = existingName || "";
     openBackdrop(nameBackdrop);
     setTimeout(() => nameInput.focus(), 50);
-    return;
   }
 
-  const dayOffset = this.dayOffset;
+  // 4) Replace original stats modal with our leaderboard
+  const originalShowStats = game.showStatsModal?.bind(game);
 
-  // capiamo se è una vittoria guardando gameStatus
-  const gs = String(this.gameStatus || "").toLowerCase();
-  const isWin = gs.includes("win") || gs.includes("won");
+  game.showStatsModal = async function () {
+    const name = getStoredName();
+    if (!name) {
+      nameInput.value = "";
+      openBackdrop(nameBackdrop);
+      setTimeout(() => nameInput.focus(), 50);
+      return;
+    }
 
-  // tentativi: se vince usa rowIndex (1..6), altrimenti 7
-  let attempts =
-    typeof this.rowIndex === "number" && this.rowIndex >= 1
-      ? this.rowIndex
-      : 7;
+    const dayOffset = this.dayOffset;
 
-  if (isWin) {
-    attempts = Math.min(Math.max(attempts, 1), 6);
-    await upsertScore(dayOffset, name, attempts, "win");
-  } else {
-    await upsertScore(dayOffset, name, 7, "lose");
-  }
+    // Determine win/lose
+    const gs = String(this.gameStatus || "").toLowerCase();
+    const isWin = gs.includes("win") || gs.includes("won");
 
-  // 👉 MOSTRIAMO SOLO LA NOSTRA LEADERBOARD
-  await showLeaderboardModal(dayOffset);
+    let attempts =
+      typeof this.rowIndex === "number" && this.rowIndex >= 1 ? this.rowIndex : 7;
 
-  // ❌ IMPORTANTISSIMO: NON chiamare MAI le statistiche originali
-  // originalShowStats?.();
-};
-// paracadute: se il gioco prova comunque a mostrare <game-stats>, lo rimuoviamo
-const killStats = () => {
-  const statsEl = document.querySelector("game-stats");
-  if (statsEl) statsEl.remove();
-};
+    if (isWin) {
+      attempts = Math.min(Math.max(attempts, 1), 6);
+      await upsertScore(dayOffset, name, attempts, "win");
+    } else {
+      await upsertScore(dayOffset, name, 7, "lose"); // 7 = goes to bottom, shows red X
+    }
 
-document.addEventListener("click", killStats, true);
-document.addEventListener("keydown", killStats, true);
+    await showLeaderboardModal(dayOffset);
 
-  // se per qualche motivo appare comunque <game-stats>, rimuovilo
-  document.addEventListener("click", () => {
+    // ❌ do NOT show original stats
+    // originalShowStats?.();
+  };
+
+  // 5) Parachute: if game-stats appears anyway, remove it
+  const killStats = () => {
     const statsEl = document.querySelector("game-stats");
     if (statsEl) statsEl.remove();
-  }, true);
+  };
+  document.addEventListener("click", killStats, true);
+  document.addEventListener("keydown", killStats, true);
 })();
