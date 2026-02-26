@@ -20,7 +20,7 @@ const firebaseConfig = {
   messagingSenderId: "429496599887",
   appId: "1:429496599887:web:1e609cf40b7c047ec8713a",
 };
-const LS_BG_KEY = "parle_bg_color_v1";
+
 const LS_NAME_KEY = "parle_player_name_v1";
 const LS_DAY_KEY = "parle_name_day_v1";
 let currentDayOffset = null;
@@ -205,33 +205,8 @@ async function showLeaderboardModal(dayOffset) {
   } catch (_) {}
   };
 
-  // === sposta la palette dove stava l'ingranaggio ===
-const movePaletteIntoHeader = () => {
-  try {
-    const palette = document.getElementById("colorPalette");
-    if (!palette) return;
 
-    const headerRight = game.shadowRoot
-      ?.querySelector("header .right");
 
-    if (headerRight && !headerRight.contains(palette)) {
-      palette.style.position = "static"; // ora vive nell'header
-      palette.style.display = "flex";
-      palette.style.gap = "6px";
-      headerRight.appendChild(palette);
-    }
-  } catch (_) {}
-};
-
-// prova subito
-movePaletteIntoHeader();
-
-// se l'header viene ricreato, reinserisce la palette
-const paletteObserver = new MutationObserver(movePaletteIntoHeader);
-paletteObserver.observe(game.shadowRoot, {
-  childList: true,
-  subtree: true
-});
 
 // prova subito
 removeSettings();
@@ -297,23 +272,6 @@ settingsObserver.observe(game.shadowRoot, {
   document.addEventListener("click", killStats, true);
   document.addEventListener("keydown", killStats, true);
 
-  // === Palette colori: cambio sfondo ===
-const palette = document.getElementById("colorPalette");
-if (palette) {
-  const savedBg = localStorage.getItem(LS_BG_KEY);
-  if (savedBg) {
-    document.body.style.backgroundColor = savedBg;
-  }
-
-  palette.querySelectorAll("button").forEach(btn => {
-    const color = btn.getAttribute("data-color");
-    btn.style.setProperty("--c", color);
-
-    btn.addEventListener("click", () => {
-      document.body.style.backgroundColor = color;
-      localStorage.setItem(LS_BG_KEY, color);
-    });
-  });
-}
+  
   
 })();
