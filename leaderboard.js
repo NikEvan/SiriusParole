@@ -197,6 +197,12 @@ async function showLeaderboardModal(dayOffset) {
   const game = document.querySelector("game-app");
   if (!game) return;
 
+  // === rimuovi ingranaggio impostazioni (settings) ===
+  try {
+  const settingsBtn = game.shadowRoot?.getElementById("settings");
+  if (settingsBtn) settingsBtn.remove();
+  } catch (_) {}
+
   // 3) Now we can read dayOffset and decide whether to ask the name
   currentDayOffset = game.dayOffset;
 
