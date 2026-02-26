@@ -197,6 +197,50 @@ async function showLeaderboardModal(dayOffset) {
   const game = document.querySelector("game-app");
   if (!game) return;
 
+  // === Sostituisci il titolo "PAR🇮🇹LE" con il logo ===
+const LOGO_SRC = "images/sirius-parole-logo.png"; // <-- assicurati che il file sia qui
+
+const replaceHeaderTitleWithLogo = () => {
+  try {
+    const header = game.shadowRoot?.querySelector("header");
+    if (!header) return;
+
+    // di solito il titolo è .title, ma metto fallback
+    const titleEl =
+      header.querySelector(".title") ||
+      header.querySelector("#title") ||
+      header.querySelector("h1") ||
+      header.querySelector("h2");
+
+    if (!titleEl) return;
+
+    // evita di reinserirlo 100 volte
+    if (titleEl.querySelector("img#siriusHeaderLogo")) return;
+
+    // svuota il testo e inserisci logo
+    titleEl.textContent = "";
+    const img = document.createElement("img");
+    img.id = "siriusHeaderLogo";
+    img.src = LOGO_SRC;
+    img.alt = "Sirius Parole";
+    img.style.height = "28px";     // <-- qui controlli la dimensione (prova 24/28/32)
+    img.style.width = "auto";
+    img.style.display = "block";
+
+    titleEl.appendChild(img);
+
+    // centra il titolo (logo) perfettamente
+    titleEl.style.display = "flex";
+    titleEl.style.justifyContent = "center";
+    titleEl.style.alignItems = "center";
+  } catch (_) {}
+};
+
+// applica subito e riapplica se l'header viene ricreato
+replaceHeaderTitleWithLogo();
+const logoObserver = new MutationObserver(replaceHeaderTitleWithLogo);
+logoObserver.observe(game.shadowRoot, { childList: true, subtree: true });
+
   // === rimuove l'ingranaggio non appena compare (no flash) ===
   const removeSettings = () => {
   try {
