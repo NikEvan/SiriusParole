@@ -176,24 +176,6 @@
     -webkit-overflow-scrolling: touch; /* swipe fluido iOS */
   }
 
-      /* === Palette colori sfondo === */
-#colorPalette {
-  display: flex;
-  gap: 6px;
-}
-
-#colorPalette button {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.4);
-  cursor: pointer;
-  background: var(--c);
-}
-
-#colorPalette button:hover {
-  transform: scale(1.15);
-}
 </style>
 
 <div id="nameBackdrop" class="modal-backdrop" aria-hidden="true">
@@ -237,15 +219,6 @@
     <script src="wordle-it.js"></script>
     <script type="module" src="leaderboard.js"></script>
     <game-app></game-app>
-
-    <!-- Palette colori -->
-<div id="colorPalette">
-  <button data-color="#121213" title="Scuro"></button>
-  <button data-color="#1e1e2e" title="Blu notte"></button>
-  <button data-color="#2b2b2b" title="Grigio"></button>
-  <button data-color="#0f3d2e" title="Verde"></button>
-  <button data-color="#3d1f0f" title="Marrone"></button>
-</div>
     
   </body>
 </html>
