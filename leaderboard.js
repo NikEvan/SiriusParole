@@ -197,11 +197,51 @@ async function showLeaderboardModal(dayOffset) {
   const game = document.querySelector("game-app");
   if (!game) return;
 
-  // === rimuovi ingranaggio impostazioni (settings) ===
+  // === rimuove l'ingranaggio non appena compare (no flash) ===
+  const removeSettings = () => {
   try {
-  const settingsBtn = game.shadowRoot?.getElementById("settings");
-  if (settingsBtn) settingsBtn.remove();
+    const btn = game.shadowRoot?.getElementById("settings");
+    if (btn) btn.remove();
   } catch (_) {}
+  };
+
+  // === sposta la palette dove stava l'ingranaggio ===
+const movePaletteIntoHeader = () => {
+  try {
+    const palette = document.getElementById("colorPalette");
+    if (!palette) return;
+
+    const headerRight = game.shadowRoot
+      ?.querySelector("header .right");
+
+    if (headerRight && !headerRight.contains(palette)) {
+      palette.style.position = "static"; // ora vive nell'header
+      palette.style.display = "flex";
+      palette.style.gap = "6px";
+      headerRight.appendChild(palette);
+    }
+  } catch (_) {}
+};
+
+// prova subito
+movePaletteIntoHeader();
+
+// se l'header viene ricreato, reinserisce la palette
+const paletteObserver = new MutationObserver(movePaletteIntoHeader);
+paletteObserver.observe(game.shadowRoot, {
+  childList: true,
+  subtree: true
+});
+
+// prova subito
+removeSettings();
+
+// osserva la shadow DOM: se viene ricreata, lo rimuove di nuovo
+const settingsObserver = new MutationObserver(removeSettings);
+settingsObserver.observe(game.shadowRoot, {
+  childList: true,
+  subtree: true
+});
 
   // 3) Now we can read dayOffset and decide whether to ask the name
   currentDayOffset = game.dayOffset;
