@@ -1223,6 +1223,12 @@ this.wordle = this.wordle || {}, this.wordle.bundle = function(e) {
                                   hardMode: o
                               })))
                       }
+                  })), this.shadowRoot.getElementById("settings").addEventListener("click", (function(a) {
+                      var s = e.$game.querySelector("game-page"),
+                          t = document.createTextNode("Impostazioni");
+                      s.appendChild(t);
+                      var o = document.createElement("game-settings");
+                      o.setAttribute("slot", "content"), o.gameApp = e, s.appendChild(o), s.setAttribute("open", "")
                   })), this.shadowRoot.getElementById("help").addEventListener("click", (function(a) {
                       var s = e.$game.querySelector("game-page"),
                           t = document.createTextNode("Come giocare");
