@@ -20,7 +20,7 @@ const firebaseConfig = {
   messagingSenderId: "429496599887",
   appId: "1:429496599887:web:1e609cf40b7c047ec8713a",
 };
-
+const LS_BG_KEY = "parle_bg_color_v1";
 const LS_NAME_KEY = "parle_player_name_v1";
 const LS_DAY_KEY = "parle_name_day_v1";
 let currentDayOffset = null;
@@ -256,4 +256,24 @@ async function showLeaderboardModal(dayOffset) {
   };
   document.addEventListener("click", killStats, true);
   document.addEventListener("keydown", killStats, true);
+
+  // === Palette colori: cambio sfondo ===
+const palette = document.getElementById("colorPalette");
+if (palette) {
+  const savedBg = localStorage.getItem(LS_BG_KEY);
+  if (savedBg) {
+    document.body.style.backgroundColor = savedBg;
+  }
+
+  palette.querySelectorAll("button").forEach(btn => {
+    const color = btn.getAttribute("data-color");
+    btn.style.setProperty("--c", color);
+
+    btn.addEventListener("click", () => {
+      document.body.style.backgroundColor = color;
+      localStorage.setItem(LS_BG_KEY, color);
+    });
+  });
+}
+  
 })();
