@@ -62,12 +62,26 @@ function isAnyModalOpen() {
   return nameOpen || lbOpen;
 }
 
+function isTextInputTarget(t) {
+  if (!t) return false;
+  const tag = (t.tagName || "").toLowerCase();
+  return tag === "input" || tag === "textarea" || t.isContentEditable === true;
+}
+
 window.addEventListener(
   "keydown",
   (e) => {
     if (!isAnyModalOpen()) return;
 
-    // allow Tab for accessibility; block everything else from reaching the game
+    // Se stai scrivendo dentro un input del modal, NON bloccare il default,
+    // ma blocca la propagazione per evitare che il gioco legga i tasti.
+    if (isTextInputTarget(e.target)) {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return;
+    }
+
+    // Altrimenti blocca i tasti (così non finiscono nella griglia)
     if (e.key !== "Tab") e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
