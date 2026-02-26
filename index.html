@@ -157,6 +157,24 @@
   .lb-left{display:flex;gap:10px;align-items:center}
   .pill{min-width:34px;text-align:center;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800}
   .muted{opacity:.75;font-size:12px}
+        /* === Scroll classifica (mobile friendly) === */
+  #lbBackdrop .modal {
+    max-height: 85vh;        /* il popup non supera lo schermo */
+    display: flex;
+    flex-direction: column;
+  }
+
+  #lbBackdrop .modal .content {
+    overflow: hidden;        /* evita doppio scroll */
+    display: flex;
+    flex-direction: column;
+  }
+
+  #lbList {
+    overflow-y: auto;        /* scroll SOLO sulla lista */
+    max-height: 50vh;        /* altezza massima lista */
+    -webkit-overflow-scrolling: touch; /* swipe fluido iOS */
+  }
 </style>
 
 <div id="nameBackdrop" class="modal-backdrop" aria-hidden="true">
