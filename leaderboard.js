@@ -223,7 +223,7 @@ const replaceHeaderTitleWithLogo = () => {
     img.id = "siriusHeaderLogo";
     img.src = LOGO_SRC;
     img.alt = "Sirius Parole";
-    img.style.height = "28px";     // <-- qui controlli la dimensione (prova 24/28/32)
+    img.style.height = "36px";     // <-- qui controlli la dimensione (prova 24/28/32)
     img.style.width = "auto";
     img.style.display = "block";
 
