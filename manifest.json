@@ -3,12 +3,12 @@
   "name": "Sirius Parole",
    "icons": [
      {
-      "src": "images/parle_logo_48x48.png",
+      "src": "images/favicon-32x32.png",
        "type": "image/png",
        "sizes": "48x48"
      },
      {
-      "src": "images/parle_logo_72x72.png",
+      "src": "images/favicon-32x32.png",
        "type": "image/png",
        "sizes": "72x72"
      },
@@ -28,12 +28,12 @@
        "sizes": "168x168"
      },
      {
-      "src": "images/android-chrome-192x192.png",
+      "src": "images/sirius-parole-logo.png",
        "type": "image/png",
        "sizes": "192x192"
      },
      {
-      "src": "images/android-chrome-512x512.png",
+      "src": "images/sirius-parole-logo.png",
        "type": "image/png",
        "sizes": "512x512"
      }
