@@ -176,7 +176,7 @@ function renderLeaderboard(items) {
 
 async function showLeaderboardModal(dayOffset) {
   lbSubtitle.textContent = `Puzzle #${dayOffset}`;
-  lbHint.textContent = `Classifica di oggi (si resetta automaticamente ogni giorno! ).`;
+  lbHint.textContent = `Classifica di oggi (si resetta automaticamente ogni giorno).`;
   openBackdrop(lbBackdrop);
 
   try {
