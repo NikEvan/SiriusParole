@@ -1,19 +1,18 @@
 <!DOCTYPE html>
- <html lang="it">
-   <head>
-     <meta charset="UTF-8" />
-     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
- 
-     <title>Sirius - Parola del giorno (In Italiano)</title>
-     <!--<meta name="description" content="Guess the hidden word in 6 tries. A new puzzle is available each day.">-->
-     <meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
-     
-     <!-- FB Meta Tags -->
-     <meta property="og:title" content="Sirius - Parola del giorno (In Italiano)">
-     <meta property="og:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
-     <meta property="og:url" content="https://nikevan.github.io/SiriusParole/">
-     <meta property="og:type" content="website">
- 
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+    <title>Sirius - Parola del giorno (In Italiano)</title>
+    <!--<meta name="description" content="Guess the hidden word in 6 tries. A new puzzle is available each day.">-->
+    <meta name="description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
+    
+    <!-- FB Meta Tags -->
+    <meta property="og:title" content="Sirius - Parola del giorno (In Italiano)">
+    <meta property="og:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
+    <meta property="og:url" content="https://nikevan.github.io/SiriusParole/">
+    <meta property="og:type" content="website">
 
     <!-- Immagine preview -->
     <meta property="og:image" content="https://nikevan.github.io/SiriusParole/images/sirius-parole-logo.png?v=20260303c">
@@ -23,51 +22,51 @@
     <meta property="og:image:width" content="975">
     <meta property="og:image:height" content="256">
     <meta property="og:image:alt" content="Logo Sirius Parole">
- 
-     <!-- Twitter -->
-     <meta name="twitter:card" content="summary_large_image">
-     <meta name="twitter:title" content="Sirius - Parola del giorno (In Italiano)">
-     <meta name="twitter:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sirius - Parola del giorno (In Italiano)">
+    <meta name="twitter:description" content="Indovina la parola nascosta in 6 tentativi. Un nuovo puzzle ogni giorno.">
     <meta name="twitter:image" content="https://nikevan.github.io/SiriusParole/images/sirius-parole-logo.png?v=20260303c">
     <meta name="twitter:image:alt" content="Logo Sirius Parole">
- 
-     <!-- Twitter Meta Tags -->
- 
-     <meta name="theme-color" content="#6aaa64" />
-     <link rel="manifest" href="manifest.json" />
-     <link href="images/favicon-32x32.png" rel="icon shortcut" sizes="3232" />
+
+    <!-- Twitter Meta Tags -->
+
+    <meta name="theme-color" content="#6aaa64" />
+    <link rel="manifest" href="manifest.json" />
+    <link href="images/favicon-32x32.png" rel="icon shortcut" sizes="3232" />
     <link href="images/sirius-parole-logo.png" rel="image_src" />
-     <link href="images/android-chrome-192x192.png" rel="apple-touch-icon" />
+    <link href="images/android-chrome-192x192.png" rel="apple-touch-icon" />
     <script>
       document.documentElement.classList.add("nightmode");
       window.localStorage.setItem("darkTheme", JSON.stringify(true));
     </script>
-     <script>
-      function randomAnalytics() {
-       // analytics are loaded once every X times
-       const times = 40;
- 
-       // pick a random number
-       var index = Math.floor(Math.random()*times);
-       console.log(index)
- 
-       if (index === 0) {
-         console.log("loading analytics")
-         // Append JS file to head section.
-         var script = document.createElement('script');
-         script.defer = true
-         script.setAttribute('data-domain', 'nikevan.github.io/SiriusParole')
-         script.src = 'https://plausible.io/js/plausible.js';
-         document.getElementsByTagName('head')[0].appendChild(script);	
-       }
-       else {
-         console.log("NOT loading analytics")
-       }
-      };
-     </script>
-     <style>
+    <script>
+     function randomAnalytics() {
+      // analytics are loaded once every X times
+      const times = 40;
 
+      // pick a random number
+      var index = Math.floor(Math.random()*times);
+      console.log(index)
+
+      if (index === 0) {
+        console.log("loading analytics")
+        // Append JS file to head section.
+        var script = document.createElement('script');
+        script.defer = true
+        script.setAttribute('data-domain', 'nikevan.github.io/SiriusParole')
+        script.src = 'https://plausible.io/js/plausible.js';
+        document.getElementsByTagName('head')[0].appendChild(script);	
+      }
+      else {
+        console.log("NOT loading analytics")
+      }
+     };
+    </script>
+    <style>
       /* Global Styles & Colors */
+     
       :root {
         --green: #6aaa64;
         --darkendGreen: #538d4e;
