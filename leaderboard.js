@@ -197,87 +197,81 @@ async function showLeaderboardModal(dayOffset) {
   const game = document.querySelector("game-app");
   if (!game) return;
 
-  // === Sostituisci il titolo "PAR🇮🇹LE" con il logo ===
-const LOGO_SRC = "images/sirius-parole-logo.png"; // <-- assicurati che il file sia qui
+  const LOGO_SRC = "images/sirius-parole-logo.png";
 
-const replaceHeaderTitleWithLogo = () => {
-  try {
-    const header = game.shadowRoot?.querySelector("header");
-    if (!header) return;
+  const applyHeaderBranding = () => {
+    try {
+      const header = game.shadowRoot?.querySelector("header");
+      if (!header) return;
 
-    // di solito il titolo è .title, ma metto fallback
-    const titleEl =
-      header.querySelector(".title") ||
-      header.querySelector("#title") ||
-      header.querySelector("h1") ||
-      header.querySelector("h2");
+      const titleEl =
+        header.querySelector(".title") ||
+        header.querySelector("#title") ||
+        header.querySelector("h1") ||
+        header.querySelector("h2");
+      if (!titleEl) return;
 
-    if (!titleEl) return;
+      header.style.position = "relative";
+      const menus = header.querySelectorAll(".menu");
+      menus.forEach((m) => {
+        m.style.minWidth = "44px";
+        m.style.display = "flex";
+        m.style.alignItems = "center";
+        m.style.justifyContent = "center";
+        m.style.zIndex = "1";
+      });
 
-    // evita di reinserirlo 100 volte
-    if (titleEl.querySelector("img#siriusHeaderLogo")) return;
+      titleEl.style.position = "absolute";
+      titleEl.style.left = "50%";
+      titleEl.style.top = "50%";
+      titleEl.style.transform = "translate(-50%, -50%)";
+      titleEl.style.display = "flex";
+      titleEl.style.justifyContent = "center";
+      titleEl.style.alignItems = "center";
+      titleEl.style.width = "100%";
+      titleEl.style.pointerEvents = "none";
 
-    // svuota il testo e inserisci logo
-    titleEl.textContent = "";
-    const img = document.createElement("img");
-    img.id = "siriusHeaderLogo";
-    img.src = LOGO_SRC;
-    img.alt = "Sirius Parole";
-    img.style.height = "36px";     // <-- qui controlli la dimensione (prova 24/28/32)
-    img.style.width = "auto";
-    img.style.display = "block";
+      let img = titleEl.querySelector("img#siriusHeaderLogo");
+      if (!img) {
+        titleEl.textContent = "";
+        img = document.createElement("img");
+        img.id = "siriusHeaderLogo";
+        img.src = LOGO_SRC;
+        img.alt = "Sirius Parole";
+        titleEl.appendChild(img);
+      }
 
-    titleEl.appendChild(img);
-
-    // centra il titolo (logo) perfettamente
-    titleEl.style.display = "flex";
-    titleEl.style.justifyContent = "center";
-    titleEl.style.alignItems = "center";
-  } catch (_) {}
-};
-
-// applica subito e riapplica se l'header viene ricreato
-replaceHeaderTitleWithLogo();
-const logoObserver = new MutationObserver(replaceHeaderTitleWithLogo);
-logoObserver.observe(game.shadowRoot, { childList: true, subtree: true });
-
-  // === rimuove l'ingranaggio non appena compare (no flash) ===
-  const removeSettings = () => {
-  try {
-    const btn = game.shadowRoot?.getElementById("settings");
-    if (btn) btn.remove();
-  } catch (_) {}
+      img.style.height = "40px";
+      img.style.width = "auto";
+      img.style.display = "block";
+      img.style.margin = "0 auto";
+    } catch (_) {}
   };
 
+  const removeSettings = () => {
+    try {
+      const btn = game.shadowRoot?.getElementById("settings");
+      if (btn) btn.remove();
+    } catch (_) {}
+  };
 
+  const killStats = () => {
+    try {
+      const root = game.shadowRoot;
+      if (!root) return;
+      root.querySelectorAll("game-stats").forEach((el) => el.remove());
+      root.querySelectorAll("countdown-timer").forEach((el) => el.remove());
 
+      const gameModal = root.querySelector("game-modal");
+      if (gameModal?.shadowRoot) {
+        gameModal.shadowRoot.querySelectorAll("game-stats, countdown-timer").forEach((el) => el.remove());
+        const overlay = gameModal.shadowRoot.querySelector(".overlay");
+        if (overlay) overlay.classList.remove("open");
+      }
+    } catch (_) {}
+  };
 
-// prova subito
-removeSettings();
-
-// osserva la shadow DOM: se viene ricreata, lo rimuove di nuovo
-const settingsObserver = new MutationObserver(removeSettings);
-settingsObserver.observe(game.shadowRoot, {
-  childList: true,
-  subtree: true
-});
-
-  // 3) Now we can read dayOffset and decide whether to ask the name
-  currentDayOffset = game.dayOffset;
-
-  const lastDay = localStorage.getItem(LS_DAY_KEY);
-  const existingName = getStoredName();
-
-  if (lastDay !== String(currentDayOffset)) {
-    nameInput.value = existingName || "";
-    openBackdrop(nameBackdrop);
-    setTimeout(() => nameInput.focus(), 50);
-  }
-
-  // 4) Replace original stats modal with our leaderboard
-  const originalShowStats = game.showStatsModal?.bind(game);
-
-  game.showStatsModal = async function () {
+  const openLeaderboardFlow = async (ctxGame) => {
     const name = getStoredName();
     if (!name) {
       nameInput.value = "";
@@ -286,36 +280,73 @@ settingsObserver.observe(game.shadowRoot, {
       return;
     }
 
-    const dayOffset = this.dayOffset;
-
-    // Determine win/lose
-    const gs = String(this.gameStatus || "").toLowerCase();
+    const dayOffset = ctxGame.dayOffset;
+    const gs = String(ctxGame.gameStatus || "").toLowerCase();
     const isWin = gs.includes("win") || gs.includes("won");
 
     let attempts =
-      typeof this.rowIndex === "number" && this.rowIndex >= 1 ? this.rowIndex : 7;
+      typeof ctxGame.rowIndex === "number" && ctxGame.rowIndex >= 1 ? ctxGame.rowIndex : 7;
 
     if (isWin) {
       attempts = Math.min(Math.max(attempts, 1), 6);
       await upsertScore(dayOffset, name, attempts, "win");
     } else {
-      await upsertScore(dayOffset, name, 7, "lose"); // 7 = goes to bottom, shows red X
+      await upsertScore(dayOffset, name, 7, "lose");
     }
 
     await showLeaderboardModal(dayOffset);
-
-    // ❌ do NOT show original stats
-    // originalShowStats?.();
   };
 
-  // 5) Parachute: if game-stats appears anyway, remove it
-  const killStats = () => {
-    const statsEl = document.querySelector("game-stats");
-    if (statsEl) statsEl.remove();
+  // Apply immediately and on rerender
+  applyHeaderBranding();
+  removeSettings();
+  killStats();
+
+  const rootObserver = new MutationObserver(() => {
+    applyHeaderBranding();
+    removeSettings();
+    killStats();
+  });
+  rootObserver.observe(game.shadowRoot, { childList: true, subtree: true });
+
+  // 3) Name gate per day
+  currentDayOffset = game.dayOffset;
+  const lastDay = localStorage.getItem(LS_DAY_KEY);
+  const existingName = getStoredName();
+  if (lastDay !== String(currentDayOffset)) {
+    nameInput.value = existingName || "";
+    openBackdrop(nameBackdrop);
+    setTimeout(() => nameInput.focus(), 50);
+  }
+
+  // 4) Replace original stats modal with our leaderboard
+  game.showStatsModal = async function () {
+    killStats();
+    await openLeaderboardFlow(this);
   };
+
+  // 5) Intercept stats button clicks in capture phase (no old modal / no timer)
+  const interceptStatsOpen = (e) => {
+    const path = e.composedPath ? e.composedPath() : [];
+    const isStatsTrigger = path.some(
+      (el) =>
+        el &&
+        ((el.id && el.id.toLowerCase() === "statistics") ||
+          (el.getAttribute && el.getAttribute("data-id") === "statistics") ||
+          (el.getAttribute && el.getAttribute("aria-label") === "statistics"))
+    );
+
+    if (!isStatsTrigger) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    killStats();
+    openLeaderboardFlow(game);
+  };
+
+  game.shadowRoot?.addEventListener("click", interceptStatsOpen, true);
   document.addEventListener("click", killStats, true);
   document.addEventListener("keydown", killStats, true);
-
-  
-  
 })();
