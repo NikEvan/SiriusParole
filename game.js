@@ -24,6 +24,7 @@ let locked = false;          // blocca input (partita finita o gia' giocata)
 
 // Callback verso l'esterno (leaderboard) a fine partita
 let onGameEnd = null;
+let onProgress = null;   // notifica il leaderboard per salvare il progresso su Firestore
 
 // Stato tastiera: lettera -> miglior esito raggiunto
 const keyState = {};
@@ -48,10 +49,18 @@ function storageKey(offset) {
   return `sirius3_game_${offset}`;
 }
 
+function currentStateData() {
+  return { board, evaluations, currentRow, status, dayOffset: _dayOffset };
+}
+
 function saveState() {
+  const data = currentStateData();
   try {
-    const data = { board, evaluations, currentRow, status, dayOffset: _dayOffset };
     localStorage.setItem(storageKey(_dayOffset), JSON.stringify(data));
+  } catch (_) {}
+  // Salvataggio remoto (Firestore) gestito dal leaderboard
+  try {
+    if (typeof onProgress === "function") onProgress(data);
   } catch (_) {}
 }
 
@@ -383,6 +392,7 @@ function finishGame() {
 export const Game = {
   init(opts = {}) {
     onGameEnd = opts.onGameEnd || null;
+    onProgress = opts.onProgress || null;
     _dayOffset = computeDayOffset();
     _solution = solutionForOffset(_dayOffset);
 
@@ -432,6 +442,42 @@ export const Game = {
   // Blocca il gioco (usato da leaderboard se "hai gia' giocato oggi" via server)
   lock() {
     locked = true;
+  },
+
+  // Quante righe sono state effettivamente giocate (per confronto locale vs remoto)
+  rowsPlayed() {
+    let n = 0;
+    for (let r = 0; r < MAX_ROWS; r++) {
+      if (evaluations[r] && evaluations[r][0]) n++;
+    }
+    return n;
+  },
+
+  // Ripristina una partita salvata su Firestore (senza animazioni, stato immediato)
+  restore(data) {
+    if (!data || data.dayOffset !== _dayOffset) return false;
+    if (!Array.isArray(data.board) || !Array.isArray(data.evaluations)) return false;
+
+    board = data.board;
+    evaluations = data.evaluations;
+    currentRow = typeof data.currentRow === "number" ? data.currentRow : 0;
+    currentCol = 0;
+    status = data.status || "playing";
+
+    // Ricostruisci lo stato della tastiera dalle righe già giocate
+    for (const k of Object.keys(keyState)) delete keyState[k];
+    for (let r = 0; r < MAX_ROWS; r++) {
+      if (board[r] && evaluations[r] && evaluations[r][0]) {
+        updateKeyState(board[r].join(""), evaluations[r]);
+      }
+    }
+    locked = status !== "playing";
+    renderAll();
+    // Salva in locale così anche questo browser è allineato
+    try {
+      localStorage.setItem(storageKey(_dayOffset), JSON.stringify(currentStateData()));
+    } catch (_) {}
+    return true;
   },
 
   // Info sicure da esporre (NON la soluzione, salvo a partita finita)

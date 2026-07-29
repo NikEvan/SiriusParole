@@ -94,6 +94,17 @@ function backfillFor(code) {
 function openBackdrop(el) { if (el) el.classList.add("show"); }
 function closeBackdrop(el) { if (el) el.classList.remove("show"); }
 
+// ---- Messaggio breve a schermo (riusa il toast del gioco) ----
+let noticeTimer = null;
+function notice(msg) {
+  const t = $("toast");
+  if (!t) { alert(msg); return; }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
 // ---- Firebase ----
 let db;
 async function initFirebase() {
@@ -224,6 +235,75 @@ async function toggleWarning(dayOffset, targetCode, targetName, myCode, myName, 
     }
     return { action: "added", count: data.count, penalty: penaltyJustApplied };
   });
+}
+
+// =========================================================
+//  PROGRESSO PARTITA (tentativi salvati su Firestore)
+// =========================================================
+// Firestore non supporta array di array: comprimo la griglia in stringhe.
+//   rows:  ["carta","monte"]   evals: ["capaa","cpaac"]  (c=verde p=giallo a=grigio)
+const EV_CODE = { correct: "c", present: "p", absent: "a" };
+const EV_MAP = { c: "correct", p: "present", a: "absent" };
+
+function packProgress(data) {
+  const rows = [], evals = [];
+  for (let r = 0; r < 6; r++) {
+    const ev = data.evaluations && data.evaluations[r];
+    if (ev && ev[0]) {
+      rows.push(((data.board && data.board[r]) || []).join(""));
+      evals.push(ev.map((e) => EV_CODE[e] || "a").join(""));
+    }
+  }
+  return { rows, evals, currentRow: data.currentRow || 0, status: data.status || "playing" };
+}
+
+function unpackProgress(p, dayOffset) {
+  const board = Array.from({ length: 6 }, () => new Array(5).fill(""));
+  const evaluations = Array.from({ length: 6 }, () => new Array(5).fill(null));
+  (p.rows || []).forEach((w, r) => {
+    if (r > 5 || !w) return;
+    board[r] = String(w).slice(0, 5).split("");
+    const ev = (p.evals && p.evals[r]) || "";
+    evaluations[r] = ev.split("").map((ch) => EV_MAP[ch] || "absent");
+  });
+  return {
+    board, evaluations,
+    currentRow: typeof p.currentRow === "number" ? p.currentRow : 0,
+    status: p.status || "playing",
+    dayOffset,
+  };
+}
+
+// Salva il progresso (chiamato dal motore dopo ogni tentativo)
+async function saveProgress(data) {
+  const code = getCode();
+  if (!code || !db) return;
+  try {
+    const ref = doc(db, "progress", String(data.dayOffset), "players", code);
+    await setDoc(ref, { ...packProgress(data), name: nameFor(code) || code, ts: serverTimestamp() });
+  } catch (e) {
+    console.warn("saveProgress:", e && e.message);
+  }
+}
+
+// Recupera il progresso da Firestore e, se più avanti di quello locale, lo ripristina
+async function syncProgress(dayOffset) {
+  const code = getCode();
+  if (!code || !db) return null;
+  try {
+    const snap = await getDoc(doc(db, "progress", String(dayOffset), "players", code));
+    if (!snap.exists()) return null;
+    const remote = snap.data();
+    const remoteRows = (remote.rows || []).length;
+    // Ripristina se il remoto ha più tentativi del locale, o se il remoto è una partita finita
+    if (remoteRows > Game.rowsPlayed() || (remote.status && remote.status !== "playing")) {
+      Game.restore(unpackProgress(remote, dayOffset));
+    }
+    return remote;
+  } catch (e) {
+    console.warn("syncProgress:", e && e.message);
+    return null;
+  }
 }
 
 // =========================================================
@@ -533,12 +613,30 @@ async function checkAlreadyPlayed(dayOffset) {
   const already = await hasPlayedToday(code, dayOffset);
   if (!already) return;
   Game.lock();
+
   const snap = await getDoc(doc(db, "leaderboards", String(dayOffset), "scores", code));
   const data = snap.exists() ? snap.data() : null;
-  const label = data && data.status === "win" ? `${data.attempts}/6` : "non indovinata";
+  const isWin = data && data.status === "win";
+  const label = isWin ? `${data.attempts}/6` : "non indovinata";
+
+  // La griglia con i tentativi è già visibile (ripristinata da syncProgress).
+  // Qui mostriamo il riepilogo con la parola, così puoi far vedere come l'hai fatta.
+  const solution = Game.getSolutionIfFinished();
   $("end-title").textContent = "Hai già giocato oggi";
-  $("end-message").innerHTML = `Risultato di oggi: <strong>${label}</strong>.<br>Torna domani per il prossimo puzzle.`;
-  $("treccani-link").parentElement.style.display = "none";
+  $("end-message").innerHTML =
+    `Risultato di oggi: <strong>${label}</strong>` +
+    (solution ? `<br>La parola era <strong>${solution.toUpperCase()}</strong>.` : "") +
+    `<br><small style="color:#818384">I tuoi tentativi sono visibili sulla griglia.</small>`;
+
+  if (solution) {
+    const link = $("treccani-link");
+    link.parentElement.style.display = "";
+    link.href = `https://www.treccani.it/vocabolario/ricerca/${encodeURIComponent(solution.toLowerCase())}/`;
+    link.textContent = `Cerca "${solution.toUpperCase()}" su Treccani →`;
+  } else {
+    $("treccani-link").parentElement.style.display = "none";
+  }
+
   currentDayOffset = dayOffset;
   openBackdrop($("end-backdrop"));
 }
@@ -560,7 +658,13 @@ function setupFab() {
 
   $("fab-classifica").addEventListener("click", () => {
     if (!getCode()) return promptCode();
-    openLeaderboard(Game.getPublicState().dayOffset ?? currentDayOffset);
+    const st = Game.getPublicState();
+    // La classifica si vede solo a partita conclusa
+    if (st.status === "playing") {
+      notice("Per vedere la classifica devi prima giocare");
+      return;
+    }
+    openLeaderboard(st.dayOffset ?? currentDayOffset);
   });
   $("fab-ammonizioni").addEventListener("click", () => {
     if (!getCode()) return promptCode();
@@ -622,7 +726,12 @@ function setupCodeModal() {
     }
     setCode(v);
     closeBackdrop($("code-backdrop"));
-    checkAlreadyPlayed(Game.getPublicState().dayOffset);
+    (async () => {
+      const dayOffset = Game.getPublicState().dayOffset;
+      // Recupera i tentativi già fatti con questo codice (anche da altri dispositivi)
+      await syncProgress(dayOffset);
+      await checkAlreadyPlayed(dayOffset);
+    })();
   };
   $("code-ok").addEventListener("click", ok);
   $("code-input").addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
@@ -755,7 +864,8 @@ function setupHelp() {
 // =========================================================
 (async function main() {
   await initFirebase();
-  const state = Game.init({ onGameEnd });
+  // onProgress: ogni tentativo viene salvato su Firestore, legato al codice
+  const state = Game.init({ onGameEnd, onProgress: saveProgress });
   currentDayOffset = state.dayOffset;
 
   setupFab();
@@ -766,6 +876,8 @@ function setupHelp() {
   if (!getCode()) {
     promptCode();
   } else {
-    checkAlreadyPlayed(state.dayOffset);
+    // Ripristina i tentativi già fatti (anche da un altro dispositivo/browser)
+    await syncProgress(state.dayOffset);
+    await checkAlreadyPlayed(state.dayOffset);
   }
 })();

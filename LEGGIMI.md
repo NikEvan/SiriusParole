@@ -76,3 +76,31 @@ Quando il nuovo è testato e ti soddisfa, puoi:
 - sostituire i file nella repo principale con questi.
 Idealmente all'inizio di un mese, per far partire la classifica mensile pulita
 sulla nuova versione.
+
+---
+
+## Aggiornamento — modifiche di questa versione
+
+1. **Classifica bloccata**: il tasto 🏆 non apre la classifica finché non hai concluso
+   la partita del giorno. Compare l'avviso "Per vedere la classifica devi prima giocare".
+
+2. **Tentativi salvati sul server**: ogni tentativo viene salvato su Firestore in
+   `progress/{giorno}/players/{CODICE}`. Se chiudi la pagina, usi la modalità incognito
+   o un altro dispositivo, rientrando con lo stesso codice **riprendi da dove eri**.
+   Non si può più ricominciare da zero cancellando i dati del browser.
+
+3. **Riepilogo al rientro**: dopo aver finito, rientrando rivedi tutti i tuoi tentativi
+   sulla griglia, con la parola e il link Treccani, così puoi far vedere come l'hai fatta.
+
+4. **Parole offuscate**: `words.js` non contiene più le liste in chiaro (sono codificate e
+   decodificate a runtime). Aprendo il file non si leggono le parole.
+   ATTENZIONE: è un deterrente, non una protezione assoluta — tutto ciò che arriva al
+   browser resta recuperabile da chi è tecnicamente determinato. La protezione vera
+   richiederebbe la verifica lato server (Cloud Functions).
+
+5. **Quadratini**: angoli a 6px, via di mezzo tra squadrati e arrotondati.
+
+### IMPORTANTE — regole Firestore da aggiornare
+Le nuove funzioni richiedono la collection `progress`. Vai su Firebase Console →
+Firestore → Regole, incolla il contenuto aggiornato di `firestore.rules` e pubblica.
+Senza questo passaggio i tentativi non vengono salvati sul server.

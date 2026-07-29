@@ -36,10 +36,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Albo d'oro
+    // Albo d'oro: scritto SOLO dal job notturno (service account, bypassa le regole).
+    // I client possono solo leggere.
     match /winners/{monthKey} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+      allow write: if false;
+    }
+
+    // PROGRESSO PARTITA — tentativi in corso, legati al codice
+    // Serve l'update perché il progresso cresce a ogni tentativo.
+    match /progress/{dayOffset}/players/{codice} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.resource.data.rows is list
+        && request.resource.data.rows.size() <= 6
+        && request.resource.data.evals is list
+        && request.resource.data.evals.size() <= 6;
       allow delete: if false;
     }
 
