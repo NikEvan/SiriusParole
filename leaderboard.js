@@ -275,6 +275,7 @@ function unpackProgress(p, dayOffset) {
 }
 
 // Salva il progresso (chiamato dal motore dopo ogni tentativo)
+let progressWarned = false;
 async function saveProgress(data) {
   const code = getCode();
   if (!code || !db) return;
@@ -282,7 +283,12 @@ async function saveProgress(data) {
     const ref = doc(db, "progress", String(data.dayOffset), "players", code);
     await setDoc(ref, { ...packProgress(data), name: nameFor(code) || code, ts: serverTimestamp() });
   } catch (e) {
-    console.warn("saveProgress:", e && e.message);
+    console.warn("saveProgress FALLITO:", e && e.message,
+      "\n-> Controlla che le regole Firestore includano la collection 'progress'.");
+    if (!progressWarned) {
+      progressWarned = true;
+      notice("Attenzione: i tentativi non vengono salvati sul server");
+    }
   }
 }
 
@@ -589,6 +595,10 @@ function showEndModal(status, solution, attempts) {
 }
 
 async function onGameEnd(info) {
+  lastDailyScore = {
+    attempts: info.status === "won" ? Math.min(Math.max(info.attempts, 1), 6) : 7,
+    status: info.status === "won" ? "win" : "lose",
+  };
   const code = getCode();
   const name = nameFor(code);
   if (!name) return;
@@ -618,6 +628,7 @@ async function checkAlreadyPlayed(dayOffset) {
   const data = snap.exists() ? snap.data() : null;
   const isWin = data && data.status === "win";
   const label = isWin ? `${data.attempts}/6` : "non indovinata";
+  if (data) lastDailyScore = { attempts: data.attempts, status: data.status };
 
   // La griglia con i tentativi è già visibile (ripristinata da syncProgress).
   // Qui mostriamo il riepilogo con la parola, così puoi far vedere come l'hai fatta.
@@ -659,8 +670,11 @@ function setupFab() {
   $("fab-classifica").addEventListener("click", () => {
     if (!getCode()) return promptCode();
     const st = Game.getPublicState();
-    // La classifica si vede solo a partita conclusa
-    if (st.status === "playing") {
+    // La classifica si vede solo a partita conclusa.
+    // Vale anche se lo stato locale non e' stato ripristinato ma il server
+    // conferma che oggi hai gia' giocato (lastDailyScore).
+    const finita = st.status !== "playing" || !!lastDailyScore;
+    if (!finita) {
       notice("Per vedere la classifica devi prima giocare");
       return;
     }
@@ -746,21 +760,42 @@ function setupModals() {
   $("end-show-lb").addEventListener("click", () => { closeBackdrop($("end-backdrop")); $("treccani-link").parentElement.style.display = ""; openLeaderboard(currentDayOffset); });
 
   $("end-share").addEventListener("click", async () => {
-    const g = Game.getShareGrid();
-    if (!g) return;
-    const text = `Sirius Parole #${g.dayOffset} ${g.score}\n\n${g.grid}`;
+    const text = buildShareText();
+    if (!text) {
+      notice("Risultato non disponibile per la condivisione");
+      return;
+    }
+    // 1) Condivisione nativa del telefono
     try {
       if (navigator.share) {
         await navigator.share({ text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        alert("Risultato copiato! Incollalo dove vuoi.");
+        return;
       }
+    } catch (e) {
+      if (e && e.name === "AbortError") return;   // l'utente ha annullato
+      console.warn("navigator.share:", e && e.message);
+    }
+    // 2) Appunti
+    try {
+      await navigator.clipboard.writeText(text);
+      notice("Risultato copiato negli appunti");
+      return;
+    } catch (e) {
+      console.warn("clipboard:", e && e.message);
+    }
+    // 3) Ultimo fallback (browser vecchi / contesti limitati)
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:-999px;opacity:0;";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      notice("Risultato copiato negli appunti");
     } catch (_) {
-      try {
-        await navigator.clipboard.writeText(text);
-        alert("Risultato copiato! Incollalo dove vuoi.");
-      } catch (__) {}
+      notice("Impossibile condividere su questo dispositivo");
     }
   });
   $("warn-close").addEventListener("click", () => closeBackdrop($("warn-backdrop")));
@@ -780,6 +815,33 @@ function setupModals() {
     const bd = $(id);
     bd.addEventListener("click", (e) => { if (e.target === bd) closeBackdrop(bd); });
   });
+}
+
+// ---- Testo da condividere ----
+// Usa la griglia del motore; se la partita non è stata ripristinata,
+// ricade sul punteggio salvato su Firestore (senza schema colori).
+let lastDailyScore = null;   // { attempts, status } del giorno corrente
+
+function buildShareText() {
+  const g = Game.getShareGrid();
+  const day = (g && typeof g.dayOffset === "number") ? g.dayOffset : currentDayOffset;
+
+  let won = null, attempts = null;
+  if (g) {
+    won = g.score !== "X/6";
+    attempts = won ? parseInt(g.score, 10) : null;
+  } else if (lastDailyScore) {
+    won = lastDailyScore.status === "win";
+    attempts = won ? lastDailyScore.attempts : null;
+  } else {
+    return null;
+  }
+
+  const frase = won
+    ? `L'ho fatta in ${attempts} tentativ${attempts === 1 ? "o" : "i"}`
+    : "Non l'ho indovinata";
+  const schema = (g && g.grid) ? `\n\n${g.grid}` : "";
+  return `Sirius Parole #${day}\n${frase}${schema}`;
 }
 
 // =========================================================
