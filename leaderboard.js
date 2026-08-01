@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { Game } from "./game.js";
 
-// ---- Firebase config (punta al database ufficiale) ----
+// ---- Firebase config (stesso progetto parole-siriusv2) ----
 const firebaseConfig = {
   apiKey: "AIzaSyB9I49AlT7vbdQbsGZVKQztrRk-tbJI7CU",
   authDomain: "parole-siriusv2.firebaseapp.com",
@@ -46,9 +46,9 @@ const INVITE_CODES = {
   "FEB-6V9A":    { name: "Fabietto", since: "2026-06-23" },
   "FAB-NVYN":    { name: "Fabio",  since: "2026-06-26" },
   "SIM-9YQY":    { name: "Simone", since: "2026-07-09" },
-  "ERI-4Y6Y":    { name: "Erick", since: "2026-07-15" },
-  "FAB-TR4R":    { name: "Fabio", since: "2026-07-16" },
-  "GIA-FDDY":    { name: "Giada", since: "2026-07-14" },
+  "ERI-4Y6Y": { name: "Erick", since: "2026-07-15" },
+  "FAB-TR4R": { name: "Fabio", since: "2026-07-16" },
+  "GIA-FDDY": { name: "Giada", since: "2026-07-14" },
 };
 
 // ---- Costanti (devono combaciare col job) ----
@@ -78,16 +78,24 @@ function todayISO() {
 function safe(s) { return String(s || "").replace(/[<>&]/g, ""); }
 
 // Backfill: penalità per i giorni del mese prima dell'iscrizione (calcolo a vista)
-function backfillFor(code) {
+// Backfill: 7 punti per ogni giorno del mese (dall'inizio stagione) precedente
+// all'iscrizione. Se monthKey è omesso usa il mese corrente.
+// Logica identica a month_backfill_attempts() in nightly_job.py.
+function backfillFor(code, monthKey) {
   const since = sinceFor(code);
   if (!since) return 0;
-  const sinceDate = new Date(since + "T00:00:00");
-  const monthStart = new Date(SEASON_START.getFullYear(), new Date().getMonth(), 1);
-  const startRef = sinceDate > monthStart ? sinceDate : monthStart;
-  // giorni dal monthStart (o inizio stagione) fino all'iscrizione
-  const ref = startRef > SEASON_START ? startRef : SEASON_START;
-  const diff = Math.floor((ref - Math.max(monthStart, SEASON_START)) / 86400000);
-  return Math.max(0, diff) * SKIP_ATTEMPTS;
+  const p = String(since).split("-").map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return 0;
+  const sinceDate = new Date(p[0], p[1] - 1, p[2]);
+
+  const [y, m] = String(monthKey || monthKeyNow()).split("-").map(Number);
+  const monthStart = new Date(y, m - 1, 1);
+  const nextMonth = new Date(y, m, 1);          // con m=12 passa a gennaio dell'anno dopo
+  const startRef = monthStart > SEASON_START ? monthStart : SEASON_START;
+
+  if (sinceDate <= startRef) return 0;          // già iscritto a inizio mese
+  if (sinceDate >= nextMonth) return 0;         // iscritto dopo la fine del mese
+  return Math.round((sinceDate - startRef) / 86400000) * SKIP_ATTEMPTS;
 }
 
 // ---- Modali helper ----
@@ -131,7 +139,7 @@ async function fetchMonthly(monthKey) {
   const snap = await getDocs(col);
   const items = snap.docs.map((d) => {
     const data = d.data();
-    const backfill = backfillFor(d.id);
+    const backfill = backfillFor(d.id, monthKey);
     return { ...data, _id: d.id, displayAttempts: (data.totalAttempts || 0) + backfill };
   });
   items.sort((a, b) => {
@@ -423,12 +431,65 @@ function renderHall(items, myCode) {
       <div class="lb-left">
         <span class="medal">🏆</span>
         <div>${safe(it.name)}${it.code === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}
-          <div style="font-size:11px;color:#e8d9a0;margin-top:2px;">${label}${status}</div>
+          <div class="hall-month" data-month="${it._id}">${label}${status} <span class="hall-caret">▾</span></div>
         </div>
       </div>
       <div class="pill">${it.totalAttempts != null ? it.totalAttempts : ""}</div>`;
     list.appendChild(row);
+
+    // Pannello del podio, vuoto finché non si clicca sul mese
+    const pod = document.createElement("div");
+    pod.className = "hall-podium";
+    pod.dataset.podium = it._id;
+    list.appendChild(pod);
   });
+
+  // Click sul mese: apre/chiude il podio di quel mese
+  list.querySelectorAll(".hall-month").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePodium(el.getAttribute("data-month"), el, myCode);
+    });
+  });
+}
+
+// Mostra 1°, 2° e 3° posto di un mese passato
+async function togglePodium(monthKey, labelEl, myCode) {
+  const pod = $("lb-list").querySelector(`[data-podium="${monthKey}"]`);
+  if (!pod) return;
+  const caret = labelEl.querySelector(".hall-caret");
+
+  // Già aperto: chiudo
+  if (pod.classList.contains("open")) {
+    pod.classList.remove("open");
+    if (caret) caret.textContent = "▾";
+    return;
+  }
+
+  pod.classList.add("open");
+  if (caret) caret.textContent = "▴";
+
+  // Carico una volta sola
+  if (pod.dataset.loaded === "1") return;
+  pod.innerHTML = `<div class="muted" style="padding:6px 10px;">Carico il podio…</div>`;
+  try {
+    const items = await fetchMonthly(monthKey);
+    const top3 = items.slice(0, 3);
+    if (!top3.length) {
+      pod.innerHTML = `<div class="muted" style="padding:6px 10px;">Nessun dato per questo mese.</div>`;
+      return;
+    }
+    const MEDAGLIE = ["🥇", "🥈", "🥉"];
+    pod.innerHTML = top3.map((p, i) => `
+      <div class="podium-item">
+        <span>${MEDAGLIE[i]} ${safe(p.name)}${p._id === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}</span>
+        <span class="podium-pts">${p.displayAttempts}</span>
+      </div>`).join("");
+    pod.dataset.loaded = "1";
+  } catch (e) {
+    console.warn("podio:", e && e.message);
+    pod.innerHTML = `<div class="muted" style="padding:6px 10px;">Podio non disponibile.</div>`;
+  }
 }
 
 function attachBadgeHandlers() {

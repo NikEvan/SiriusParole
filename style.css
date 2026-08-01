@@ -471,6 +471,36 @@ main {
 .card-badge.yellow { color: var(--warn); }
 .card-badge.red    { color: var(--danger); }
 
+/* ---- Albo d'oro: mese cliccabile e podio ---- */
+.hall-month {
+  font-size: 11px;
+  color: #e8d9a0;
+  margin-top: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hall-caret { font-size: 10px; opacity: 0.8; }
+.hall-podium {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  margin: -2px 0 2px 12px;
+}
+.hall-podium.open { display: flex; }
+.podium-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-elev);
+  border-left: 2px solid #c9a227;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.podium-pts { color: var(--text-dim); font-weight: 700; }
+
 /* ---- Treccani box ---- */
 .treccani-box {
   background: #2a2a30;
