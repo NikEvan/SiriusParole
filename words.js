@@ -1,6 +1,5 @@
 // ====== SIRIUS PAROLE 3.0 — Liste parole (offuscate) ======
 // Le liste non sono in chiaro: codificate e decodificate a runtime.
-// NOTA: cio' che arriva al browser resta tecnicamente recuperabile da chi e' determinato.
 // Questo serve a impedire la lettura immediata aprendo il file.
 
 const _A = [
