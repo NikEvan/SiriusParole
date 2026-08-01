@@ -48,6 +48,7 @@ const INVITE_CODES = {
   "SIM-9YQY":    { name: "Simone", since: "2026-07-09" },
   "ERI-4Y6Y": { name: "Erick", since: "2026-07-15" },
   "FAB-TR4R": { name: "Fabio", since: "2026-07-16" },
+  "GIA-FDDY": { name: "Giada", since: "2026-07-14" },
 };
 
 // ---- Costanti (devono combaciare col job) ----
