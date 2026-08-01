@@ -95,31 +95,52 @@ main {
 }
 
 /* ---- Griglia ---- */
+/* La dimensione della tessera si adatta allo schermo: prende il valore minore fra
+   lo spazio orizzontale disponibile, quello verticale (per non finire sotto la
+   tastiera) e un tetto massimo per non esagerare su tablet. */
 #board-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 10px;
+  padding: 8px;
+  min-height: 0;
 }
 #board {
+  --gap: 6px;
+  --board-max: 430px;   /* larghezza massima della griglia */
+  --chrome: 280px;      /* spazio occupato da header + tastiera + margini */
+  --tile: min(
+    (min(96vw, var(--board-max)) - 4 * var(--gap)) / 5,
+    (100vh - var(--chrome) - 5 * var(--gap)) / 6,
+    72px
+  );
   display: grid;
-  grid-template-rows: repeat(6, 1fr);
-  gap: 6px;
-  padding: 6px;
+  grid-template-rows: repeat(6, var(--tile));
+  gap: var(--gap);
+}
+/* dvh tiene conto delle barre dinamiche del browser su mobile */
+@supports (height: 100dvh) {
+  #board {
+    --tile: min(
+      (min(96vw, var(--board-max)) - 4 * var(--gap)) / 5,
+      (100dvh - var(--chrome) - 5 * var(--gap)) / 6,
+      72px
+    );
+  }
 }
 .row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(5, var(--tile));
+  gap: var(--gap);
 }
 .tile {
-  width: 58px;
-  height: 58px;
+  width: var(--tile);
+  height: var(--tile);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: calc(var(--tile) * 0.52);
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text);
@@ -477,10 +498,8 @@ main {
 .reason-btn:active { background: #333; }
 
 /* ---- Piccoli schermi ---- */
+/* Su schermi bassi riduco solo la tastiera: le tessere si adattano da sole
+   grazie alla formula --tile, quindi non serve forzarne la misura qui. */
 @media (max-height: 700px) {
-  .tile { width: 50px; height: 50px; font-size: 26px; }
   .key { height: 46px; }
-}
-@media (max-width: 360px) {
-  .tile { width: 52px; height: 52px; }
 }
