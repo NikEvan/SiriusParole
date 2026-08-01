@@ -779,8 +779,27 @@ function setupFab() {
 
   try {
     const p = JSON.parse(localStorage.getItem("sirius3_fab") || "null");
-    if (p) { wrap.style.right = p.right + "px"; wrap.style.bottom = p.bottom + "px"; }
+    if (p) applicaPosizione(p.right, p.bottom);
   } catch (_) {}
+
+  // Riporta il bottone dentro lo schermo: una posizione salvata su un telefono
+  // piu' grande potrebbe cadere fuori dall'area visibile su schermi diversi.
+  function applicaPosizione(right, bottom) {
+    const maxR = Math.max(8, window.innerWidth - 70);
+    const maxB = Math.max(8, window.innerHeight - 70);
+    const r = Math.min(Math.max(8, Number(right) || 18), maxR);
+    const b = Math.min(Math.max(8, Number(bottom) || 18), maxB);
+    wrap.style.right = r + "px";
+    wrap.style.bottom = b + "px";
+  }
+
+  // Se lo schermo cambia dimensione (rotazione, finestra ridimensionata)
+  // ricontrollo che il bottone sia ancora raggiungibile.
+  window.addEventListener("resize", () => {
+    const r = parseInt(wrap.style.right, 10);
+    const b = parseInt(wrap.style.bottom, 10);
+    applicaPosizione(isNaN(r) ? 18 : r, isNaN(b) ? 18 : b);
+  });
 }
 
 // =========================================================

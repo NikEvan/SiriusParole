@@ -110,11 +110,13 @@ main {
   --gap: 6px;
   --board-max: 430px;   /* larghezza massima della griglia */
   --chrome: 280px;      /* spazio occupato da header + tastiera + margini */
-  --tile: min(
+  /* max(...) garantisce un minimo: su finestre molto basse il calcolo
+     verticale potrebbe diventare negativo e far sparire la griglia. */
+  --tile: max(30px, min(
     (min(96vw, var(--board-max)) - 4 * var(--gap)) / 5,
     (100vh - var(--chrome) - 5 * var(--gap)) / 6,
     72px
-  );
+  ));
   display: grid;
   grid-template-rows: repeat(6, var(--tile));
   gap: var(--gap);
@@ -122,11 +124,11 @@ main {
 /* dvh tiene conto delle barre dinamiche del browser su mobile */
 @supports (height: 100dvh) {
   #board {
-    --tile: min(
+    --tile: max(30px, min(
       (min(96vw, var(--board-max)) - 4 * var(--gap)) / 5,
       (100dvh - var(--chrome) - 5 * var(--gap)) / 6,
       72px
-    );
+    ));
   }
 }
 .row {
