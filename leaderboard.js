@@ -7,15 +7,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { Game } from "./game.js";
 
-// ---- Firebase config (stesso progetto parole-siriusv2) ----
-// ===== CONFIG DI TEST (parole-sirius-3) — sostituire con parole-siriusv2 al lancio =====
+// ---- Firebase config (punta al database ufficiale) ----
 const firebaseConfig = {
-  apiKey: "AIzaSyBHF68ZRiezbM_bzKPmGG9WNId8afAeikk",
-  authDomain: "parole-sirius-3.firebaseapp.com",
-  projectId: "parole-sirius-3",
-  storageBucket: "parole-sirius-3.firebasestorage.app",
-  messagingSenderId: "339666353402",
-  appId: "1:339666353402:web:dd4ae0f37ab91d1173dd43",
+  apiKey: "AIzaSyB9I49AlT7vbdQbsGZVKQztrRk-tbJI7CU",
+  authDomain: "parole-siriusv2.firebaseapp.com",
+  projectId: "parole-siriusv2",
+  storageBucket: "parole-siriusv2.firebasestorage.app",
+  messagingSenderId: "440474011300",
+  appId: "1:440474011300:web:650b9c1dc4e3a74aed0831",
 };
 
 // ---- CODICI INVITO ----
