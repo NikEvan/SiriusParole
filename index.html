@@ -150,8 +150,19 @@
   <script type="module" src="leaderboard.js"></script>
   <script>
     if ("serviceWorker" in navigator) {
+      // Se c'era già un service worker e ne subentra uno nuovo, ricarico una volta
+      // sola: così gli aggiornamenti si applicano subito, senza cache da svuotare.
+      const avevaControllo = !!navigator.serviceWorker.controller;
+      let giaRicaricato = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!avevaControllo || giaRicaricato) return;
+        giaRicaricato = true;
+        location.reload();
+      });
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js")
+          .then((reg) => reg.update())
+          .catch(() => {});
       });
     }
   </script>
