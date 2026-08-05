@@ -1,0 +1,32 @@
+# ══════════════════════════════════════════════════════════════
+#  MESSAGGI DEL PROMEMORIA TELEGRAM
+#
+#  Come funziona:
+#  - Un messaggio per riga. Ne viene scelto uno a caso ogni volta.
+#  - Le righe che iniziano con # sono commenti e vengono ignorate.
+#  - Le righe vuote vengono ignorate.
+#  - Scrivi {link} dove vuoi che compaia l'indirizzo del gioco.
+#  - Le emoji funzionano: copiale e incollale dentro il testo.
+#  - Per aggiungere un messaggio basta scrivere una riga nuova.
+#
+#  ATTENZIONE: non serve nessuna virgoletta e nessuna virgola.
+#  Scrivi il testo normalmente, come in un messaggio.
+# ══════════════════════════════════════════════════════════════
+
+
+# ─────────── MESSAGGI DI MEZZOGIORNO ───────────
+[PRANZO]
+Pausa pranzo, pausa parole! 🍝 Chi non ha ancora giocato oggi? {link}
+La parola del giorno vi aspetta 🔤 Buon appetito e buona partita! {link}
+Cinque lettere, sei tentativi, un caffè. ☕ Si gioca! {link}
+Promemoria di metà giornata: la parola di oggi non si indovina da sola 😏 {link}
+Qualcuno è ancora a zero tentativi... 👀 {link}
+
+
+# ─────────── MESSAGGI DELLA SERA ───────────
+[SERA]
+Ultimo giro! 🌙 La parola di oggi scade a mezzanotte. {link}
+Non fatevi trovare senza aver giocato: mancano poche ore ⏳ {link}
+Chi non gioca oggi, domani parte con 7 punti di penalità 📉 {link}
+Buonasera! 🌆 Ricordate di fare la parola prima di andare a dormire. {link}
+Il tempo stringe ⏰ La classifica non perdona. {link}
