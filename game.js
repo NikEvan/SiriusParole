@@ -376,8 +376,19 @@ function shakeRow() {
 }
 
 // ---- Fine partita ----
+// Numero di righe realmente giocate (righe con un esito registrato).
+// E' l'unica fonte affidabile per il punteggio: currentRow e' solo la posizione
+// del cursore e puo' disallinearsi dopo un ripristino da server.
+function contaRigheGiocate() {
+  let n = 0;
+  for (let r = 0; r < MAX_ROWS; r++) {
+    if (evaluations[r] && evaluations[r][0]) n++;
+  }
+  return n;
+}
+
 function finishGame() {
-  const attempts = status === "won" ? currentRow + 1 : 7;
+  const attempts = status === "won" ? contaRigheGiocate() : 7;
   if (typeof onGameEnd === "function") {
     onGameEnd({
       status,
@@ -411,14 +422,16 @@ export const Game = {
     if (saved) {
       board = saved.board;
       evaluations = saved.evaluations;
-      currentRow = saved.currentRow;
       status = saved.status;
-      // Ricostruisci lo stato tastiera
-      for (let r = 0; r < currentRow + 1; r++) {
+      // Ricostruisci lo stato tastiera scorrendo tutte le righe
+      for (let r = 0; r < MAX_ROWS; r++) {
         if (board[r] && evaluations[r] && evaluations[r][0]) {
           updateKeyState(board[r].join(""), evaluations[r]);
         }
       }
+      // Cursore ricalcolato dalle righe effettive, non preso dal salvataggio
+      const giocateLocali = contaRigheGiocate();
+      currentRow = status === "playing" ? giocateLocali : Math.max(0, giocateLocali - 1);
       if (status !== "playing") locked = true;
     }
     renderAll();
@@ -446,11 +459,7 @@ export const Game = {
 
   // Quante righe sono state effettivamente giocate (per confronto locale vs remoto)
   rowsPlayed() {
-    let n = 0;
-    for (let r = 0; r < MAX_ROWS; r++) {
-      if (evaluations[r] && evaluations[r][0]) n++;
-    }
-    return n;
+    return contaRigheGiocate();
   },
 
   // Ripristina una partita salvata su Firestore (senza animazioni, stato immediato)
@@ -460,7 +469,10 @@ export const Game = {
 
     board = data.board;
     evaluations = data.evaluations;
-    currentRow = typeof data.currentRow === "number" ? data.currentRow : 0;
+    // Il cursore viene RICALCOLATO dalle righe ripristinate: il valore salvato
+    // puo' essere disallineato e provocherebbe righe vuote e punteggi gonfiati.
+    const giocate = contaRigheGiocate();
+    currentRow = status === "playing" ? giocate : Math.max(0, giocate - 1);
     currentCol = 0;
     status = data.status || "playing";
 
@@ -485,7 +497,7 @@ export const Game = {
     return {
       dayOffset: _dayOffset,
       status,
-      attempts: status === "won" ? currentRow + 1 : status === "lost" ? 7 : null,
+      attempts: status === "won" ? contaRigheGiocate() : status === "lost" ? 7 : null,
       // la soluzione la diamo solo se la partita è finita
       solution: status === "playing" ? null : _solution,
     };
@@ -500,13 +512,13 @@ export const Game = {
   getShareGrid() {
     if (status === "playing") return null;
     const EMOJI = { correct: "🟩", present: "🟨", absent: "⬛" };
-    const rowsPlayed = status === "won" ? currentRow + 1 : MAX_ROWS;
+    const rowsPlayed = status === "won" ? contaRigheGiocate() : MAX_ROWS;
     const lines = [];
     for (let r = 0; r < rowsPlayed; r++) {
       if (!evaluations[r] || !evaluations[r][0]) continue;
       lines.push(evaluations[r].map((e) => EMOJI[e] || "⬛").join(""));
     }
-    const score = status === "won" ? `${currentRow + 1}/6` : "X/6";
+    const score = status === "won" ? `${contaRigheGiocate()}/6` : "X/6";
     return { dayOffset: _dayOffset, score, grid: lines.join("\n") };
   },
 };
