@@ -1,0 +1,32 @@
+name: Telegram - comandi
+
+# Legge i comandi ricevuti dal bot (/notifiche, /stop...) e risponde in privato.
+# Gira ogni ora: le conferme possono arrivare con un po' di ritardo, ma
+# l'iscrizione viene comunque registrata correttamente.
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+
+jobs:
+  comandi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install firebase-admin
+
+      - name: Gestisci comandi
+        env:
+          MODE: comandi
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python telegram_bot.py

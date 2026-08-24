@@ -1,20 +1,20 @@
-name: Promemoria Telegram
+name: Telegram - promemoria
 
-# Gli orari sono in UTC. In estate (ora legale) l'Italia e' UTC+2, in inverno UTC+1.
-# Sono schedulati un po' in anticipo perche' GitHub esegue i cron con ritardo.
-#   23 10 UTC -> 12:23 italiane in estate  (arriva verso le 12:30-13:30)
-#   23 17 UTC -> 19:23 italiane in estate  (arriva verso le 19:30-20:30)
-# NOTA: a fine ottobre, con il cambio d'ora, arriveranno un'ora prima.
-#       Per correggere basta aumentare di 1 l'ora dei due cron.
+# Invia il promemoria IN PRIVATO ai soli iscritti (comando /notifiche).
+# Gli orari sono in UTC. In estate l'Italia e' UTC+2, in inverno UTC+1.
+# Schedulati in anticipo perche' GitHub esegue i cron con ritardo.
+#   23 10 UTC -> 12:23 italiane in estate (arriva verso le 12:30-13:30)
+#   23 17 UTC -> 19:23 italiane in estate (arriva verso le 19:30-20:30)
+# NOTA: a fine ottobre, col cambio d'ora, arriveranno un'ora prima:
+#       per correggere basta aumentare di 1 l'ora dei due cron.
 on:
   schedule:
     - cron: '23 10 * * *'
     - cron: '23 17 * * *'
-  # Lancio manuale per provare
   workflow_dispatch:
     inputs:
       fascia:
-        description: "Quale messaggio inviare"
+        description: "Quale promemoria inviare"
         required: true
         default: pranzo
         type: choice
@@ -34,11 +34,14 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install dependencies
+        run: pip install firebase-admin
+
       - name: Invia promemoria
         env:
+          MODE: promemoria
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Se lanciato a mano usa la scelta, altrimenti la stringa cron dello schedule
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FASCIA: ${{ github.event.inputs.fascia || github.event.schedule }}
           GAME_URL: https://nikevan.github.io/SiriusParole/
-        run: python telegram_reminder.py
+        run: python telegram_bot.py
