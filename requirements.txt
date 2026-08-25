@@ -1,0 +1,14 @@
+# Versioni bloccate delle librerie usate dai job.
+#
+# PERCHE' SONO BLOCCATE:
+# Il 25/08/2026 e' uscita google-cloud-firestore 2.29.0, che rompe le query
+# ("Invalid database id %28default%29") e ha fatto fallire il job notturno e
+# i promemoria. Con la 2.28.1 tutto funziona.
+#
+# Se in futuro vuoi aggiornare, cambia i numeri qui e lancia a mano un job
+# per verificare che funzioni prima di lasciarlo in automatico.
+firebase-admin==7.5.0
+google-cloud-firestore==2.28.1
+google-api-core==2.34.0
+google-cloud-core==2.6.1
+google-auth==2.56.3
