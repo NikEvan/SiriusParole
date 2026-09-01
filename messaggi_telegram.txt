@@ -22,6 +22,7 @@ Pausa pranzo, pausa parole 🍝 Cinque lettere ti stanno aspettando {link}
 Hai mangiato? Bene. Ora gioca 🍽️ {link}
 La parola di oggi non si indovina da sola, sai 😏 {link}
 Promemoria: gioca. Fine del messaggio 😐 {link}
+Fai sta parola! Se no facciamo notte... In inglese fahrenheit! {link}
 Muoviti che poi ti dimentichi come al solito 🙄 {link}
 Ricordati la parola, che poi rompi i coglioni se resti indietro 📉 {link}
 Pronti, partenza, PAROLA 🏁 {link}
@@ -33,7 +34,10 @@ Il tuo cervello chiede un po' di stretching 🧠 {link}
 Promemoria affettuoso: gioca 🥰 {link}
 La classifica non si scala da sola 📈 {link}
 Bussano alla porta. Sono io. Devi giocare 🚪 {link}
+Chi sono io ? Sirius Parole (cit.) {link}
+Bussano a quest'ora del mattino, chi sarà mai? SiriusParole! {link}
 Non è che ti stia chiedendo la luna, è una cazzo di parola 🌙 {link}
+Non è un proverbio: è una parola, Giacomo. {link}
 Sono un bot, non ho fame, ma so che tu hai una parola da indovinare 🤖 {link}
 Oh, la parola di oggi non si fa da sola. Muovi il culo 🍝 {link}
  
@@ -46,10 +50,13 @@ Domani ti lamenti della classifica e io ti ricordo questo messaggio 🎻 {link}
 Non andare a letto con questo rimorso 🛏️ {link}
 Il tempo stringe ⏰ {link}
 Ehi. Oggi non hai giocato. Lo sappiamo entrambi 👀 {link}
+Chi sono io ? Sirius Parole (cit.) {link}
+Bussano a quest'ora del mattino, chi sarà mai? SiriusParole! {link}
 Ti restano cinque lettere e sei a posto 🔤 {link}
 Domani sarà troppo tardi per la parola di oggi ⌛ {link}
 Un ultimo sforzo prima di Netflix 📺 {link}
-La tua media ti ringrazierà 🙏 {link}
+Fai sta parola! Se no facciamo notte... In inglese fahrenheit! {link}
+Non è un proverbio: è una parola, Giacomo. {link}
 Serata tranquilla? Perfetta per una parola 🌆 {link}
 Se giochi eviti la penalità. Se non giochi... beh 🤷 {link}
 Io sto per staccare. Tu spero di no 🌜 {link}
