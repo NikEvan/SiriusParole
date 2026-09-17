@@ -56,7 +56,7 @@ const SEASON_START = new Date(2026, 6, 1); // 1 luglio 2026 (mese 0-based: 6 = l
 const SKIP_ATTEMPTS = 7;
 const WARNING_THRESHOLD = 5;
 const WARNING_PENALTY = 10;
-const REASONS = ["Comportamento scorretto", "Ha barato", "Ha sentito la parola", "Ha visto la parola da qualcuno"];
+const REASONS = ["Comportamento scorretto", "Ha barato", "Ha sentito la parola", "Ha visto la parola da qualcuno", "Che Pasteur!", "Mi sembra strano..", "Quanto bara?"];
 
 const LS_CODE = "sirius3_code";
 
