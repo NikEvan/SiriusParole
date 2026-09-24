@@ -111,10 +111,16 @@
       50%      { transform: translateY(-50%) rotate(9deg); }
     }
 
+    /* Il contenitore viene spostato dal codice, il figlio anima le ali:
+       se entrambi usassero transform l'animazione vincerebbe sul movimento. */
     .tema-pipistrello {
       position: absolute;
+      top: 0; left: 0;
       line-height: 1;
       will-change: transform;
+    }
+    .tema-ali {
+      display: inline-block;
       animation: pipistrelloAli 0.28s ease-in-out infinite alternate;
     }
     @keyframes pipistrelloAli {
@@ -207,9 +213,12 @@
     for (let i = 0; i < quanti; i++) {
       const el = document.createElement("div");
       el.className = "tema-pipistrello";
-      el.textContent = "🦇";
       el.style.fontSize = caso(16, 30).toFixed(0) + "px";
-      el.style.animationDuration = caso(0.18, 0.4).toFixed(2) + "s";
+      const ali = document.createElement("span");
+      ali.className = "tema-ali";
+      ali.textContent = "🦇";
+      ali.style.animationDuration = caso(0.18, 0.4).toFixed(2) + "s";
+      el.appendChild(ali);
       box.appendChild(el);
       bestie.push({
         el,
