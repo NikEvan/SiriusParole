@@ -76,6 +76,41 @@
       92%  { opacity: 0.85; }
       100% { transform: translateX(100%) translateY(0)   scaleX(var(--verso,1)); opacity: 0; }
     }
+    /* Contorni della griglia in arancione. Le caselle gia' colorate
+       (verde/giallo/grigio) restano come sono, per non confondere il gioco. */
+    #board .tile:not(.correct):not(.present):not(.absent) {
+      border-color: #a34d0b;
+    }
+    #board .tile.filled:not(.correct):not(.present):not(.absent) {
+      border-color: #ff8c1a;
+      box-shadow: 0 0 8px rgba(255,140,26,0.25);
+    }
+    #board-wrap {
+      filter: drop-shadow(0 0 18px rgba(255,120,0,0.10));
+    }
+    header {
+      border-bottom-color: #a34d0b !important;
+    }
+    /* Il punto interrogativo si intona al tema */
+    #help-btn {
+      border-color: rgba(255,140,26,0.55) !important;
+      color: #ff8c1a !important;
+    }
+    /* Zucche accanto al punto interrogativo */
+    .tema-zucca-header {
+      position: absolute;
+      top: 50%;
+      font-size: 20px;
+      line-height: 1;
+      transform-origin: 50% 100%;
+      animation: zuccaDondola 2.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes zuccaDondola {
+      0%, 100% { transform: translateY(-50%) rotate(-9deg); }
+      50%      { transform: translateY(-50%) rotate(9deg); }
+    }
+
     .tema-pipistrello {
       position: absolute;
       line-height: 1;
@@ -210,18 +245,44 @@
   // Il gioco chiamera' questa al posto dei coriandoli
   window.__effettoVittoria = lanciaPipistrelli;
 
+  // ─────────── Zucche nell'intestazione, accanto al punto interrogativo ───────────
+  function decoraIntestazione() {
+    const testata = document.querySelector("header");
+    if (!testata || testata.querySelector(".tema-zucca-header")) return;
+    testata.style.position = "relative";
+
+    // Una a sinistra del punto interrogativo
+    const z1 = document.createElement("span");
+    z1.className = "tema-zucca-header";
+    z1.textContent = "🎃";
+    z1.style.right = "48px";
+    z1.style.animationDelay = "0s";
+    testata.appendChild(z1);
+
+    // Una sul lato opposto, per bilanciare
+    const z2 = document.createElement("span");
+    z2.className = "tema-zucca-header";
+    z2.textContent = "🎃";
+    z2.style.left = "14px";
+    z2.style.animationDelay = "1.3s";
+    testata.appendChild(z2);
+  }
+
   // ─────────── Avvio degli effetti ambientali ───────────
   // Ogni circa 20 secondi, sfasati tra loro per non farli comparire insieme.
   function avvia() {
+    decoraIntestazione();
+
+    // INTERVALLI: abbassa i numeri per renderli piu' frequenti, alzali per diradarli.
     setTimeout(() => {
       spuntaZucca();
-      setInterval(() => { if (Math.random() < 0.85) spuntaZucca(); }, 20000);
-    }, 6000);
+      setInterval(() => { if (Math.random() < 0.9) spuntaZucca(); }, 13000);
+    }, 4000);
 
     setTimeout(() => {
       passaFantasma();
-      setInterval(() => { if (Math.random() < 0.85) passaFantasma(); }, 20000);
-    }, 14000);
+      setInterval(() => { if (Math.random() < 0.9) passaFantasma(); }, 15000);
+    }, 9000);
   }
 
   if (document.readyState === "loading") {
