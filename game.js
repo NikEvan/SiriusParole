@@ -263,13 +263,16 @@ function submitGuess() {
   // Riga non vincente: rivelazione normale (giro che mostra i colori)
   revealRow(currentRow, result, () => {
     renderKeyboard();
-    if (currentRow >= MAX_ROWS - 1) {
+    // La sconfitta si decide contando le parole REALMENTE giocate:
+    // usare currentRow poteva chiudere la partita con un tentativo ancora libero.
+    if (contaRigheGiocate() >= MAX_ROWS) {
       status = "lost";
       locked = true;
       saveState();
       finishGame();
     } else {
-      currentRow++;
+      // Il cursore viene riallineato alle parole giocate, cosi' non si sfasa mai
+      currentRow = contaRigheGiocate();
       currentCol = 0;
       saveState();
     }
@@ -322,6 +325,14 @@ function launchConfetti() {
   // Pattern: 3 vibrazioni distinte in crescendo, con pause tra loro.
   try {
     if (navigator.vibrate) navigator.vibrate([100, 120, 100, 120, 220]);
+  } catch (_) {}
+  // Se un tema stagionale ha un effetto di vittoria proprio (es. pipistrelli a
+  // ottobre), usa quello al posto dei coriandoli. Il gioco non sa quale sia.
+  try {
+    if (typeof window.__effettoVittoria === "function") {
+      window.__effettoVittoria();
+      return;
+    }
   } catch (_) {}
   const old = document.getElementById("confetti-canvas");
   if (old) old.remove();
