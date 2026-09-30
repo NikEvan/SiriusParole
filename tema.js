@@ -113,6 +113,29 @@
 
     /* Il contenitore viene spostato dal codice, il figlio anima le ali:
        se entrambi usassero transform l'animazione vincerebbe sul movimento. */
+    .tema-ragnatela {
+      position: absolute;
+      font-size: 34px;
+      line-height: 1;
+      opacity: 0.22;
+      pointer-events: none;
+    }
+    .tema-ragno {
+      position: absolute;
+      top: -30px;
+      font-size: 20px;
+      line-height: 1;
+      animation: ragnoScende 8.5s ease-in-out forwards;
+    }
+    @keyframes ragnoScende {
+      0%   { transform: translateY(0); opacity: 0; }
+      10%  { opacity: 0.9; }
+      45%  { transform: translateY(130px); }
+      55%  { transform: translateY(118px); }
+      90%  { opacity: 0.9; }
+      100% { transform: translateY(-20px); opacity: 0; }
+    }
+
     .tema-pipistrello {
       position: absolute;
       top: 0; left: 0;
@@ -260,21 +283,53 @@
     if (!testata || testata.querySelector(".tema-zucca-header")) return;
     testata.style.position = "relative";
 
-    // Una a sinistra del punto interrogativo
-    const z1 = document.createElement("span");
-    z1.className = "tema-zucca-header";
-    z1.textContent = "🎃";
-    z1.style.right = "48px";
-    z1.style.animationDelay = "0s";
-    testata.appendChild(z1);
+    // Fila di decorazioni: posizione, simbolo, ritardo del dondolio, dimensione
+    const decorazioni = [
+      { right: "46px", txt: "🎃", delay: "0s",   size: "20px" },
+      { right: "76px", txt: "🦇", delay: "0.5s", size: "15px" },
+      { right: "100px", txt: "🎃", delay: "1.0s", size: "15px" },
+      { left: "12px",  txt: "🎃", delay: "1.3s", size: "20px" },
+      { left: "40px",  txt: "🕸️", delay: "0.8s", size: "16px" },
+      { left: "64px",  txt: "🎃", delay: "0.2s", size: "14px" },
+    ];
+    for (const d of decorazioni) {
+      const s = document.createElement("span");
+      s.className = "tema-zucca-header";
+      s.textContent = d.txt;
+      if (d.right) s.style.right = d.right;
+      if (d.left) s.style.left = d.left;
+      s.style.animationDelay = d.delay;
+      s.style.fontSize = d.size;
+      testata.appendChild(s);
+    }
+  }
 
-    // Una sul lato opposto, per bilanciare
-    const z2 = document.createElement("span");
-    z2.className = "tema-zucca-header";
-    z2.textContent = "🎃";
-    z2.style.left = "14px";
-    z2.style.animationDelay = "1.3s";
-    testata.appendChild(z2);
+  // ─────────── Ragnatele fisse negli angoli dello schermo ───────────
+  function ragnatele() {
+    const angoli = [
+      { top: "0", left: "0", rot: "0deg" },
+      { top: "0", right: "0", rot: "90deg" },
+    ];
+    for (const a of angoli) {
+      const r = document.createElement("div");
+      r.className = "tema-ragnatela";
+      r.textContent = "🕸️";
+      if (a.top) r.style.top = a.top;
+      if (a.left) r.style.left = a.left;
+      if (a.right) r.style.right = a.right;
+      r.style.transform = `rotate(${a.rot})`;
+      strato.appendChild(r);
+    }
+    // Un ragnetto che scende e risale da un filo, ogni tanto
+    setInterval(() => {
+      if (inPausa() || Math.random() > 0.5) return;
+      const ragno = document.createElement("div");
+      ragno.className = "tema-ragno";
+      ragno.textContent = "🕷️";
+      ragno.style.left = caso(30, window.innerWidth - 60).toFixed(0) + "px";
+      strato.appendChild(ragno);
+      setTimeout(() => ragno.remove(), 9000);
+    }, 25000);
   }
 
   // ─────────── Avvio degli effetti ambientali ───────────
@@ -283,15 +338,24 @@
     decoraIntestazione();
 
     // INTERVALLI: abbassa i numeri per renderli piu' frequenti, alzali per diradarli.
+    ragnatele();
+
     setTimeout(() => {
       spuntaZucca();
-      setInterval(() => { if (Math.random() < 0.9) spuntaZucca(); }, 13000);
-    }, 4000);
+      setInterval(() => {
+        spuntaZucca();
+        // Ogni tanto ne spuntano due insieme da caselle diverse
+        if (Math.random() < 0.5) setTimeout(spuntaZucca, 900);
+      }, 8000);
+    }, 3000);
 
     setTimeout(() => {
       passaFantasma();
-      setInterval(() => { if (Math.random() < 0.9) passaFantasma(); }, 15000);
-    }, 9000);
+      setInterval(() => {
+        passaFantasma();
+        if (Math.random() < 0.45) setTimeout(passaFantasma, 2200);
+      }, 9000);
+    }, 6000);
   }
 
   if (document.readyState === "loading") {
