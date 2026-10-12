@@ -503,6 +503,31 @@ main {
 }
 .podium-pts { color: var(--text-dim); font-weight: 700; }
 
+/* ---- Pastiglia delle caprette ---- */
+.goat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 6px;
+  margin-left: 5px;
+  cursor: pointer;
+  background: #e9e3d2;
+  color: #4a3f22;
+  vertical-align: middle;
+}
+.goat-btn {
+  background: #e9e3d2 !important;
+  border: none !important;
+  color: #4a3f22 !important;
+  font-size: 16px;
+  padding: 6px 9px;
+  line-height: 1;
+}
+.goat-btn:active { background: #d8d0ba !important; }
+
 /* ---- Treccani box ---- */
 .treccani-box {
   background: #2a2a30;

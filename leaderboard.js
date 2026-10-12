@@ -319,6 +319,57 @@ async function syncProgress(dayOffset) {
 }
 
 // =========================================================
+//  CAPRETTE (pastorizzazione) — goliardiche, nessun effetto sul punteggio
+// =========================================================
+// Dati: goats/{YYYY-MM}/received/{codice}
+//       { count: totale ricevute, name, by: { CHI_HA_DATO: quante } }
+// Si accumulano per tutto il mese e non hanno limite.
+
+function goatRef(monthKey, code) {
+  return doc(db, "goats", monthKey, "received", code);
+}
+
+async function fetchCaprette(monthKey) {
+  try {
+    const snap = await getDocs(collection(db, "goats", monthKey, "received"));
+    const map = {};
+    snap.docs.forEach((d) => { map[d.id] = d.data(); });
+    return map;
+  } catch (e) {
+    console.warn("fetchCaprette:", e && e.message);
+    return {};
+  }
+}
+
+async function pastorizza(targetCode, targetName, myCode) {
+  const monthKey = monthKeyNow();
+  await setDoc(goatRef(monthKey, targetCode), {
+    name: targetName,
+    count: increment(1),
+    by: { [myCode]: increment(1) },
+    lastTs: serverTimestamp(),
+  }, { merge: true });
+}
+
+function classificheCaprette(dati) {
+  const ricevute = [];
+  const date = {};
+  for (const [code, d] of Object.entries(dati || {})) {
+    const n = Number(d && d.count) || 0;
+    if (n > 0) ricevute.push({ code, nome: (d && d.name) || code, n });
+    for (const [chi, quante] of Object.entries((d && d.by) || {})) {
+      date[chi] = (date[chi] || 0) + (Number(quante) || 0);
+    }
+  }
+  ricevute.sort((a, b) => b.n - a.n);
+  const dateOrd = Object.entries(date)
+    .map(([code, n]) => ({ code, nome: nameFor(code) || code, n }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n);
+  return { ricevute, date: dateOrd };
+}
+
+// =========================================================
 //  SALVATAGGIO PARTITA
 // =========================================================
 async function hasPlayedToday(code, dayOffset) {
@@ -354,6 +405,7 @@ async function saveScore(dayOffset, code, name, attempts, status) {
 let currentTab = "daily";
 let currentDayOffset = null;
 let warningsCache = {}; // ammonizioni del giorno corrente, per i cartellini
+let capretteCache = {}; // caprette del mese corrente, per le pastiglie
 
 function medalClass(i) { return i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""; }
 function medalIcon(i) { return i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : ""; }
@@ -363,6 +415,14 @@ function badgeHtml(code) {
   if (!w || !w.count) return "";
   const cls = w.count >= WARNING_THRESHOLD ? "red" : "yellow";
   return `<span class="card-badge ${cls}" data-warn-detail="${code}"><span class="card-rect"></span>${w.count}</span>`;
+}
+
+// Pastiglia con la pecora: caprette ricevute nel mese
+function goatBadgeHtml(code) {
+  const g = capretteCache[code];
+  const n = g && Number(g.count);
+  if (!n) return "";
+  return `<span class="goat-badge" data-goat-detail="${code}">🐑 ${n}</span>`;
 }
 
 function renderDaily(items, myCode) {
@@ -376,7 +436,7 @@ function renderDaily(items, myCode) {
     row.innerHTML = `
       <div class="lb-left">
         ${medalIcon(i) ? `<span class="medal">${medalIcon(i)}</span>` : `<div class="pill">${i + 1}</div>`}
-        <div>${safe(it.name)}${it._id === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}${badgeHtml(it._id)}</div>
+        <div>${safe(it.name)}${it._id === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}${badgeHtml(it._id)}${goatBadgeHtml(it._id)}</div>
       </div>
       <div class="pill">${label}</div>`;
     list.appendChild(row);
@@ -404,7 +464,7 @@ function renderMonthly(items, yesterday, myCode) {
     row.innerHTML = `
       <div class="lb-left">
         ${medalIcon(i) ? `<span class="medal">${medalIcon(i)}</span>` : `<div class="pill">${pos}</div>`}
-        <div>${safe(it.name)}${it._id === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}${delta}${badgeHtml(it._id)}
+        <div>${safe(it.name)}${it._id === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}${delta}${badgeHtml(it._id)}${goatBadgeHtml(it._id)}
           <div style="font-size:11px;color:#818384;margin-top:2px;">${it.games || 0}p · ${it.wins || 0}v</div>
         </div>
       </div>
@@ -497,6 +557,12 @@ function attachBadgeHandlers() {
       showWarnDetail(el.getAttribute("data-warn-detail"));
     });
   });
+  document.querySelectorAll("[data-goat-detail]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showGoatDetail(el.getAttribute("data-goat-detail"));
+    });
+  });
 }
 
 function showWarnDetail(code) {
@@ -523,6 +589,7 @@ async function loadTab() {
   list.innerHTML = `<div class="muted">Carico…</div>`;
   try {
     warningsCache = await fetchWarningsForDay(currentDayOffset);
+    capretteCache = await fetchCaprette(monthKeyNow());
     if (currentTab === "daily") {
       $("lb-subtitle").textContent = `Puzzle #${currentDayOffset}`;
       $("lb-hint").textContent = "Una partita al giorno.";
@@ -560,6 +627,7 @@ function openLeaderboard(dayOffset) {
 async function openWarnings(dayOffset) {
   const myCode = getCode();
   warningsCache = await fetchWarningsForDay(dayOffset);
+  capretteCache = await fetchCaprette(monthKeyNow());
   const list = $("warn-list");
   list.innerHTML = "";
   // Ordino: prima gli altri, escludo me stesso
@@ -577,16 +645,61 @@ async function openWarnings(dayOffset) {
     else { btnLabel = "Ammonisci"; btnColor = "#c9b458"; }
     row.innerHTML = `
       <div class="lb-left">
-        <div>${safe(info.name)} ${badgeHtml(code)}</div>
+        <div>${safe(info.name)} ${badgeHtml(code)}${goatBadgeHtml(code)}</div>
       </div>
-      <button class="close-x" style="background:${btnColor};border:none;color:${iAmmonished && !locked ? '#fff' : '#121213'};font-weight:700" data-warn-action="${code}" ${iAmmonished && locked ? "disabled" : ""}>${btnLabel}</button>`;
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="close-x" style="background:${btnColor};border:none;color:${iAmmonished && !locked ? '#fff' : '#121213'};font-weight:700" data-warn-action="${code}" ${iAmmonished && locked ? "disabled" : ""}>${btnLabel}</button>
+        <button class="close-x goat-btn" data-goat-action="${code}" title="Pastorizza">🐑</button>
+      </div>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-warn-action]").forEach((btn) => {
     btn.addEventListener("click", () => handleWarnAction(btn.getAttribute("data-warn-action")));
   });
+  list.querySelectorAll("[data-goat-action]").forEach((btn) => {
+    btn.addEventListener("click", () => handleGoatAction(btn.getAttribute("data-goat-action")));
+  });
   openBackdrop($("warn-backdrop"));
   attachBadgeHandlers();
+}
+
+// ── Pastorizzazione ──
+async function handleGoatAction(targetCode) {
+  const myCode = getCode();
+  if (!myCode) return;
+  const nome = nameFor(targetCode) || targetCode;
+  try {
+    await pastorizza(targetCode, nome, myCode);
+    notice(`🐑 Hai pastorizzato ${nome}`);
+  } catch (e) {
+    console.warn("pastorizza:", e && e.message);
+    notice("Non è stato possibile pastorizzare");
+    return;
+  }
+  capretteCache = await fetchCaprette(monthKeyNow());
+  openWarnings(currentDayOffset);
+}
+
+function showGoatDetail(code) {
+  const g = capretteCache[code] || {};
+  const list = $("detail-list");
+  $("detail-title").textContent = `🐑 Caprette di ${nameFor(code) || safe(code)}`;
+  list.innerHTML = "";
+  const voci = Object.entries(g.by || {})
+    .map(([chi, n]) => ({ nome: nameFor(chi) || chi, n: Number(n) || 0 }))
+    .filter((v) => v.n > 0)
+    .sort((a, b) => b.n - a.n);
+  if (!voci.length) {
+    list.innerHTML = `<div class="muted">Nessuna capretta.</div>`;
+  } else {
+    voci.forEach((v) => {
+      const row = document.createElement("div");
+      row.className = "lb-item";
+      row.innerHTML = `<div class="lb-left"><div>${safe(v.nome)}</div></div><div class="pill">🐑 ${v.n}</div>`;
+      list.appendChild(row);
+    });
+  }
+  openBackdrop($("detail-backdrop"));
 }
 
 let pendingWarnTarget = null;
@@ -981,16 +1094,54 @@ const HELP_CONTENT = {
       <p><span class="card-badge red"><span class="card-rect"></span>5</span> rosso: ha raggiunto 5 ammonizioni.</p>
       <p>Quando una persona riceve <strong>5 ammonizioni</strong> nello stesso giorno, scatta automaticamente una <strong>penalità di 10 punti</strong> in classifica. Le ammonizioni si azzerano ogni giorno.</p>
       <p>Puoi ritirare la tua ammonizione, ma solo <strong>prima</strong> che scatti la penalità (sotto le 5). Cliccando sul cartellino vedi chi ha ammonito e perché.</p>
+      <div id="caprette-box" style="margin-top:18px;border-top:1px dashed #3a3a3c;padding-top:12px;">
+        <h3 style="display:flex;align-items:center;gap:6px;">🐑 Caprette</h3>
+        <p style="font-size:13px;">Puoi <strong>pastorizzare</strong> chiunque, quante volte vuoi, dal menu delle ammonizioni.
+        Non toglie né aggiunge punti: serve solo a ridere. Il conteggio si azzera ogni mese.</p>
+        <div id="caprette-classifica" class="muted" style="font-size:13px;">Carico…</div>
+      </div>
+
       <div class="help-note">
         <strong>Usale con onestà.</strong> Ammonisci solo in casi <strong>evidenti</strong>, non per gioco, per antipatia o per scherzo. Non chiedere ad altri di ammonire qualcuno: organizzare "cordate" contro una persona è scorretto quanto barare. Le ammonizioni sono uno strumento di rispetto, non un'arma.
       </div>
     </div>`,
 };
 
+async function caricaClassificaCaprette() {
+  const box = $("caprette-classifica");
+  if (!box) return;
+  const myCode = getCode();
+  try {
+    const dati = await fetchCaprette(monthKeyNow());
+    capretteCache = dati;
+    const { ricevute, date } = classificheCaprette(dati);
+    if (!ricevute.length && !date.length) {
+      box.innerHTML = `<div class="muted">Nessuna capretta questo mese. Pastorizzate, gente.</div>`;
+      return;
+    }
+    const riga = (v, i) => `
+      <div class="lb-item" style="padding:6px 10px;">
+        <div class="lb-left">
+          <span style="width:22px;display:inline-block;">${i < 3 ? ["🥇","🥈","🥉"][i] : (i + 1)}</span>
+          <span>${safe(v.nome)}${v.code === myCode ? ' <small style="color:#6aaa64">(tu)</small>' : ""}</span>
+        </div>
+        <div class="pill">🐑 ${v.n}</div>
+      </div>`;
+    box.innerHTML = `
+      <div style="margin-top:8px;font-weight:700;font-size:13px;">🧑‍🌾 Miglior Pasteur del mese</div>
+      <div class="leaderboard" style="margin-top:4px;">${date.slice(0, 5).map(riga).join("")}</div>
+      <div style="margin-top:12px;font-weight:700;font-size:13px;">🐑 Capra del mese</div>
+      <div class="leaderboard" style="margin-top:4px;">${ricevute.slice(0, 5).map(riga).join("")}</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="muted">Classifica non disponibile.</div>`;
+  }
+}
+
 function setupHelp() {
   const show = (tab) => {
     $("help-content").innerHTML = HELP_CONTENT[tab] || "";
     $("help-tabs").querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.htab === tab));
+    if (tab === "ammonizioni") caricaClassificaCaprette();
   };
   $("help-btn").addEventListener("click", () => { show("istruzioni"); openBackdrop($("help-backdrop")); });
   $("help-close").addEventListener("click", () => closeBackdrop($("help-backdrop")));
