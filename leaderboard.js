@@ -341,14 +341,36 @@ async function fetchCaprette(monthKey) {
   }
 }
 
+// Quante pecorelle si possono dare in TOTALE in un'ora (da tutti messi insieme)
+const GOAT_LIMITE_ORARIO = 50;
+
+function chiaveOra() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}`;
+}
+
 async function pastorizza(targetCode, targetName, myCode) {
   const monthKey = monthKeyNow();
-  await setDoc(goatRef(monthKey, targetCode), {
-    name: targetName,
-    count: increment(1),
-    by: { [myCode]: increment(1) },
-    lastTs: serverTimestamp(),
-  }, { merge: true });
+  const limiteRef = doc(db, "goats", monthKey, "limiti", chiaveOra());
+  const bersaglioRef = goatRef(monthKey, targetCode);
+
+  // Transazione: prima TUTTE le letture, poi tutte le scritture.
+  return await runTransaction(db, async (tx) => {
+    const snap = await tx.get(limiteRef);
+    const usate = snap.exists() ? (Number(snap.data().count) || 0) : 0;
+    if (usate >= GOAT_LIMITE_ORARIO) {
+      return { ok: false, usate };
+    }
+    tx.set(limiteRef, { count: increment(1), ts: serverTimestamp() }, { merge: true });
+    tx.set(bersaglioRef, {
+      name: targetName,
+      count: increment(1),
+      by: { [myCode]: increment(1) },
+      lastTs: serverTimestamp(),
+    }, { merge: true });
+    return { ok: true, restanti: GOAT_LIMITE_ORARIO - usate - 1 };
+  });
 }
 
 function classificheCaprette(dati) {
@@ -669,8 +691,13 @@ async function handleGoatAction(targetCode) {
   if (!myCode) return;
   const nome = nameFor(targetCode) || targetCode;
   try {
-    await pastorizza(targetCode, nome, myCode);
-    notice(`🐑 Hai pastorizzato ${nome}`);
+    const esito = await pastorizza(targetCode, nome, myCode);
+    if (esito && esito.ok === false) {
+      notice("🐑 Limite orario raggiunto, riprova tra un po'");
+      return;
+    }
+    const restanti = esito && typeof esito.restanti === "number" ? esito.restanti : null;
+    notice(`🐑 Hai pastorizzato ${nome}` + (restanti !== null && restanti <= 10 ? ` (ne restano ${restanti} quest'ora)` : ""));
   } catch (e) {
     console.warn("pastorizza:", e && e.message);
     notice("Non è stato possibile pastorizzare");
@@ -683,14 +710,14 @@ async function handleGoatAction(targetCode) {
 function showGoatDetail(code) {
   const g = capretteCache[code] || {};
   const list = $("detail-list");
-  $("detail-title").textContent = `🐑 Caprette di ${nameFor(code) || safe(code)}`;
+  $("detail-title").textContent = `🐑 Pecorelle di ${nameFor(code) || safe(code)}`;
   list.innerHTML = "";
   const voci = Object.entries(g.by || {})
     .map(([chi, n]) => ({ nome: nameFor(chi) || chi, n: Number(n) || 0 }))
     .filter((v) => v.n > 0)
     .sort((a, b) => b.n - a.n);
   if (!voci.length) {
-    list.innerHTML = `<div class="muted">Nessuna capretta.</div>`;
+    list.innerHTML = `<div class="muted">Nessuna pecorella.</div>`;
   } else {
     voci.forEach((v) => {
       const row = document.createElement("div");
@@ -1094,15 +1121,16 @@ const HELP_CONTENT = {
       <p><span class="card-badge red"><span class="card-rect"></span>5</span> rosso: ha raggiunto 5 ammonizioni.</p>
       <p>Quando una persona riceve <strong>5 ammonizioni</strong> nello stesso giorno, scatta automaticamente una <strong>penalità di 10 punti</strong> in classifica. Le ammonizioni si azzerano ogni giorno.</p>
       <p>Puoi ritirare la tua ammonizione, ma solo <strong>prima</strong> che scatti la penalità (sotto le 5). Cliccando sul cartellino vedi chi ha ammonito e perché.</p>
-      <div id="caprette-box" style="margin-top:18px;border-top:1px dashed #3a3a3c;padding-top:12px;">
-        <h3 style="display:flex;align-items:center;gap:6px;">🐑 Caprette</h3>
-        <p style="font-size:13px;">Puoi <strong>pastorizzare</strong> chiunque, quante volte vuoi, dal menu delle ammonizioni.
-        Non toglie né aggiunge punti: serve solo a ridere. Il conteggio si azzera ogni mese.</p>
-        <div id="caprette-classifica" class="muted" style="font-size:13px;">Carico…</div>
-      </div>
-
       <div class="help-note">
         <strong>Usale con onestà.</strong> Ammonisci solo in casi <strong>evidenti</strong>, non per gioco, per antipatia o per scherzo. Non chiedere ad altri di ammonire qualcuno: organizzare "cordate" contro una persona è scorretto quanto barare. Le ammonizioni sono uno strumento di rispetto, non un'arma.
+      </div>
+
+      <div id="caprette-box" style="margin-top:18px;border-top:1px dashed #3a3a3c;padding-top:12px;">
+        <h3 style="display:flex;align-items:center;gap:6px;">🐑 Pecorelle</h3>
+        <p style="font-size:13px;">Puoi <strong>pastorizzare</strong> chiunque dal menu delle ammonizioni, quante volte vuoi.
+        Non toglie né aggiunge punti: serve solo a ridere. Si azzerano ogni mese.
+        Per vedere chi ha pastorizzato una persona, tocca la sua pecorella accanto al nome.</p>
+        <div id="caprette-classifica" class="muted" style="font-size:13px;">Carico…</div>
       </div>
     </div>`,
 };
@@ -1114,9 +1142,9 @@ async function caricaClassificaCaprette() {
   try {
     const dati = await fetchCaprette(monthKeyNow());
     capretteCache = dati;
-    const { ricevute, date } = classificheCaprette(dati);
-    if (!ricevute.length && !date.length) {
-      box.innerHTML = `<div class="muted">Nessuna capretta questo mese. Pastorizzate, gente.</div>`;
+    const { ricevute } = classificheCaprette(dati);
+    if (!ricevute.length) {
+      box.innerHTML = `<div class="muted">Nessuna pecorella questo mese. Pastorizzate, gente.</div>`;
       return;
     }
     const riga = (v, i) => `
@@ -1129,9 +1157,7 @@ async function caricaClassificaCaprette() {
       </div>`;
     box.innerHTML = `
       <div style="margin-top:8px;font-weight:700;font-size:13px;">🧑‍🌾 Miglior Pasteur del mese</div>
-      <div class="leaderboard" style="margin-top:4px;">${date.slice(0, 5).map(riga).join("")}</div>
-      <div style="margin-top:12px;font-weight:700;font-size:13px;">🐑 Capra del mese</div>
-      <div class="leaderboard" style="margin-top:4px;">${ricevute.slice(0, 5).map(riga).join("")}</div>`;
+      <div class="leaderboard" style="margin-top:4px;">${ricevute.map(riga).join("")}</div>`;
   } catch (e) {
     box.innerHTML = `<div class="muted">Classifica non disponibile.</div>`;
   }
