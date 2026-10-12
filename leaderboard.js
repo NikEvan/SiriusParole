@@ -165,14 +165,19 @@ async function saveSnapshot(monthKey, items) {
     await setDoc(doc(db, "snapshots", `${monthKey}_${todayISO()}`), { positions, ts: serverTimestamp() });
   } catch (_) {}
 }
+// Legge SOLO lo snapshot di ieri, non l'intera raccolta.
+// Prima venivano letti tutti gli snapshot mai creati: uno al giorno, per sempre.
+// Col passare dei mesi ogni apertura della classifica sarebbe costata centinaia
+// di letture, fino a esaurire la quota giornaliera gratuita di Firebase.
 async function getYesterdaySnapshot(monthKey) {
   try {
-    const snap = await getDocs(collection(db, "snapshots"));
-    const prev = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .filter((s) => s.id.startsWith(monthKey + "_") && s.id < `${monthKey}_${todayISO()}`)
-      .sort((a, b) => b.id.localeCompare(a.id));
-    return prev[0] || null;
+    const ieri = new Date();
+    ieri.setDate(ieri.getDate() - 1);
+    const p = (n) => String(n).padStart(2, "0");
+    const dataIeri = `${ieri.getFullYear()}-${p(ieri.getMonth() + 1)}-${p(ieri.getDate())}`;
+    const chiave = `${monthKey}_${dataIeri}`;
+    const snap = await getDoc(doc(db, "snapshots", chiave));
+    return snap.exists() ? { id: chiave, ...snap.data() } : null;
   } catch (_) { return null; }
 }
 
