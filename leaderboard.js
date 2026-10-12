@@ -1132,7 +1132,7 @@ const HELP_CONTENT = {
 
       <div id="caprette-box" style="margin-top:18px;border-top:1px dashed #3a3a3c;padding-top:12px;">
         <h3 style="display:flex;align-items:center;gap:6px;">🐑 Pecorelle</h3>
-        <p style="font-size:13px;">Puoi <strong>pastorizzare</strong> chiunque dal menu delle ammonizioni, quante volte vuoi.
+        <p style="font-size:13px;">Puoi <strong>pastorizzare</strong> chiunque dal menu delle ammonizioni, fino a un massimo di <strong>50 all'ora</strong> in totale fra tutti.
         Non toglie né aggiunge punti: serve solo a ridere. Si azzerano ogni mese.
         Per vedere chi ha pastorizzato una persona, tocca la sua pecorella accanto al nome.</p>
         <div id="caprette-classifica" class="muted" style="font-size:13px;">Carico…</div>
