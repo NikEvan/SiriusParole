@@ -451,7 +451,8 @@
       /* ---- Babbo Natale ---- */
       #babbo {
         position: fixed;
-        width: 64px; height: 76px;
+        top: 0; left: 0;           /* senza questi lo spostamento parte da fondo pagina */
+        width: 68px; height: 88px;
         pointer-events: auto;      /* si puo' afferrare */
         cursor: grab;
         touch-action: none;        /* niente scroll mentre lo trascini */
@@ -461,7 +462,7 @@
       }
       #babbo.preso { cursor: grabbing; }
       #babbo .gamba-sx, #babbo .gamba-dx,
-      #babbo .braccio-sx { transform-origin: 50% 10%; }
+      #babbo .braccio-sx { transform-origin: 50% 8%; }
       #babbo.cammina .gamba-sx { animation: passoA 0.46s ease-in-out infinite alternate; }
       #babbo.cammina .gamba-dx { animation: passoB 0.46s ease-in-out infinite alternate; }
       #babbo.cammina .braccio-sx { animation: passoB 0.46s ease-in-out infinite alternate; }
@@ -603,54 +604,81 @@
 
     // ─────────── Babbo Natale disegnato, cammina e si trascina ───────────
     const BABBO_SVG = `
-      <svg viewBox="0 0 64 76" width="64" height="76" xmlns="http://www.w3.org/2000/svg">
-        <!-- sacco -->
+      <svg viewBox="0 0 80 104" width="68" height="88" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bn_cappotto" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#b81f1f"/><stop offset="45%" stop-color="#e03333"/><stop offset="100%" stop-color="#a81a1a"/>
+          </linearGradient>
+          <linearGradient id="bn_pelo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#d9dde2"/>
+          </linearGradient>
+          <linearGradient id="bn_pelle" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f7d3ae"/><stop offset="100%" stop-color="#e0ab82"/>
+          </linearGradient>
+          <linearGradient id="bn_sacco" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#a9743c"/><stop offset="100%" stop-color="#6d4620"/>
+          </linearGradient>
+          <linearGradient id="bn_fibbia" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffe17a"/><stop offset="55%" stop-color="#e3b325"/><stop offset="100%" stop-color="#a87d0d"/>
+          </linearGradient>
+          <radialGradient id="bn_guancia" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ef9a8a" stop-opacity="0.85"/><stop offset="100%" stop-color="#ef9a8a" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
         <g>
-          <path d="M44 30 q12 2 13 14 q1 11 -10 12 q-11 1 -12 -10 q-1 -13 9 -16 z" fill="#8a5a2b"/>
-          <path d="M44 30 q5 -3 9 -1 q-3 3 -9 4 z" fill="#6f4621"/>
+          <path d="M52 36 q17 4 19 20 q2 15 -13 17 q-15 2 -17 -13 q-2 -18 11 -24 z" fill="url(#bn_sacco)"/>
+          <path d="M57 42 q7 6 8 16 q1 8 -4 11 q4 -12 -4 -27 z" fill="#ffffff" opacity="0.10"/>
+          <path d="M52 36 q7 -4 12 -1 q-5 4 -12 5 z" fill="#5b3a1a"/>
+          <path d="M53 35 q6 -3 11 -1" stroke="#4a2f14" stroke-width="2" fill="none" stroke-linecap="round"/>
         </g>
-        <!-- braccio dietro (tiene il sacco) -->
-        <g class="braccio-dx">
-          <rect x="38" y="33" width="9" height="20" rx="4.5" fill="#c62828"/>
-        </g>
-        <!-- gambe -->
+        <g class="braccio-dx"><rect x="47" y="40" width="11" height="23" rx="5.5" fill="#a81a1a"/></g>
         <g class="gamba-sx">
-          <rect x="21" y="52" width="9" height="17" rx="4" fill="#7b1f1f"/>
-          <rect x="18" y="66" width="14" height="8" rx="3" fill="#2b2b2b"/>
+          <rect x="25" y="64" width="11" height="20" rx="5" fill="#7a1616"/>
+          <path d="M22 80 h17 q4 0 4 4 v5 q0 3 -3 3 h-19 q-3 0 -3 -3 v-5 q0 -4 4 -4 z" fill="#2a2a2e"/>
+          <rect x="20" y="89" width="23" height="3.5" rx="1.6" fill="#141417"/>
         </g>
         <g class="gamba-dx">
-          <rect x="32" y="52" width="9" height="17" rx="4" fill="#8e2424"/>
-          <rect x="30" y="66" width="14" height="8" rx="3" fill="#1f1f1f"/>
+          <rect x="39" y="64" width="11" height="20" rx="5" fill="#8f1c1c"/>
+          <path d="M37 80 h17 q4 0 4 4 v5 q0 3 -3 3 h-19 q-3 0 -3 -3 v-5 q0 -4 4 -4 z" fill="#1f1f23"/>
+          <rect x="35" y="89" width="23" height="3.5" rx="1.6" fill="#101013"/>
         </g>
-        <!-- cappotto -->
-        <path d="M20 32 q12 -5 24 0 l3 23 q-15 5 -30 0 z" fill="#d32f2f"/>
-        <rect x="18" y="51" width="28" height="6" rx="2" fill="#2b2b2b"/>
-        <rect x="28" y="50" width="8" height="8" rx="1.5" fill="#f0c419"/>
-        <rect x="30.5" y="52.5" width="3" height="3" rx="0.6" fill="#b8950f"/>
-        <!-- pelliccia del cappotto -->
-        <rect x="18" y="29" width="28" height="6" rx="3" fill="#f7f7f7"/>
-        <!-- braccio davanti -->
+        <path d="M24 38 q16 -7 32 0 q3 14 4 28 q-20 7 -40 0 q1 -14 4 -28 z" fill="url(#bn_cappotto)"/>
+        <path d="M40 38 q8 -1 16 0 q3 14 4 28 q-10 3 -20 3.5 z" fill="#000000" opacity="0.10"/>
+        <path d="M37 36 q3 16 2 32 l6 0 q1 -17 4 -32 z" fill="url(#bn_pelo)"/>
+        <rect x="21" y="60" width="38" height="8" rx="2.5" fill="#26262a"/>
+        <rect x="21" y="60" width="38" height="2.4" rx="1.2" fill="#ffffff" opacity="0.12"/>
+        <rect x="34" y="58.5" width="11" height="11" rx="2" fill="url(#bn_fibbia)"/>
+        <rect x="37.2" y="61.7" width="4.6" height="4.6" rx="1" fill="#2a2015"/>
+        <path d="M22 34 q18 -6 36 0 q0 6 -3 7 q-15 -5 -30 0 q-3 -1 -3 -7 z" fill="url(#bn_pelo)"/>
         <g class="braccio-sx">
-          <rect x="15" y="33" width="9" height="20" rx="4.5" fill="#e03b3b"/>
-          <circle cx="19.5" cy="55" r="5" fill="#f7f7f7"/>
+          <rect x="18" y="40" width="11" height="22" rx="5.5" fill="#e03333"/>
+          <rect x="18" y="55" width="11" height="4" rx="2" fill="url(#bn_pelo)"/>
+          <circle cx="23.5" cy="64" r="6" fill="#2a2a2e"/>
+          <circle cx="22" cy="62.5" r="2" fill="#ffffff" opacity="0.12"/>
         </g>
-        <!-- testa -->
-        <circle cx="32" cy="20" r="11" fill="#f3c8a0"/>
-        <!-- barba -->
-        <path d="M22 20 q2 16 10 17 q8 -1 10 -17 q-10 7 -20 0 z" fill="#f7f7f7"/>
-        <ellipse cx="32" cy="27" rx="4" ry="2.6" fill="#e8b0a0"/>
-        <!-- baffi -->
-        <path d="M26 24 q6 3 12 0 q-6 5 -12 0 z" fill="#ffffff"/>
-        <!-- occhi -->
-        <circle cx="28" cy="18" r="1.5" fill="#2b2b2b"/>
-        <circle cx="36" cy="18" r="1.5" fill="#2b2b2b"/>
-        <!-- naso -->
-        <circle cx="32" cy="21.5" r="2.4" fill="#e8846b"/>
-        <!-- cappello -->
-        <path d="M20 13 q12 -11 24 0 z" fill="#d32f2f"/>
-        <path d="M43 13 q6 -4 8 -11 q-7 0 -11 5 z" fill="#d32f2f"/>
-        <rect x="19" y="11" width="26" height="6" rx="3" fill="#f7f7f7"/>
-        <circle cx="52" cy="2.5" r="4" fill="#f7f7f7"/>
+        <circle cx="40" cy="22" r="13" fill="url(#bn_pelle)"/>
+        <path d="M27 22 q0 22 13 24 q13 -2 13 -24 q-2 10 -13 11 q-11 -1 -13 -11 z" fill="#eef1f4"/>
+        <path d="M28 28 q3 12 12 16 q-9 -2 -12 -16 z" fill="#ffffff"/>
+        <path d="M52 28 q-3 12 -12 16 q9 -2 12 -16 z" fill="#d8dde3"/>
+        <path d="M33 40 q4 6 7 6 q-5 1 -7 -6 z" fill="#ffffff"/>
+        <path d="M47 40 q-4 6 -7 6 q5 1 7 -6 z" fill="#ffffff"/>
+        <ellipse cx="31" cy="24" rx="5" ry="3.6" fill="url(#bn_guancia)"/>
+        <ellipse cx="49" cy="24" rx="5" ry="3.6" fill="url(#bn_guancia)"/>
+        <ellipse cx="35" cy="19" rx="1.9" ry="2.1" fill="#3a2a1e"/>
+        <ellipse cx="45" cy="19" rx="1.9" ry="2.1" fill="#3a2a1e"/>
+        <circle cx="35.7" cy="18.3" r="0.7" fill="#ffffff"/>
+        <circle cx="45.7" cy="18.3" r="0.7" fill="#ffffff"/>
+        <path d="M31 15 q4 -3 8 -0.5 q-4 -1 -8 0.5 z" fill="#f2f4f7"/>
+        <path d="M49 15 q-4 -3 -8 -0.5 q4 -1 8 0.5 z" fill="#f2f4f7"/>
+        <ellipse cx="40" cy="25" rx="3.3" ry="2.9" fill="#e08a70"/>
+        <ellipse cx="39" cy="24.2" rx="1.1" ry="0.9" fill="#ffffff" opacity="0.35"/>
+        <path d="M40 28 q-7 0 -9 4 q5 1 9 -2 q4 3 9 2 q-2 -4 -9 -4 z" fill="#ffffff"/>
+        <path d="M27 14 q13 -13 26 0 q-13 -5 -26 0 z" fill="#c42525"/>
+        <path d="M52 13 q9 -3 12 -11 q-9 -2 -14 6 z" fill="#d32f2f"/>
+        <path d="M52 13 q7 -2 10 -7 q-6 4 -10 7 z" fill="#000000" opacity="0.12"/>
+        <rect x="25" y="10" width="30" height="7" rx="3.5" fill="url(#bn_pelo)"/>
+        <circle cx="65" cy="1.5" r="5.5" fill="#ffffff"/>
+        <circle cx="66.5" cy="2.5" r="3" fill="#dde1e6"/>
       </svg>`;
 
     function babboNatale() {
@@ -660,7 +688,7 @@
       b.title = "Trascinami!";
       document.body.appendChild(b);
 
-      const L = 64, A = 76;
+      const L = 68, A = 88;
       let x = caso(20, Math.max(40, window.innerWidth - L - 20));
       let y = 0;                       // calcolata sotto
       let direzione = Math.random() < 0.5 ? 1 : -1;
